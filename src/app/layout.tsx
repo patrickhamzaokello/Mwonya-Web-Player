@@ -3,21 +3,12 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AudioProvider } from "@/contexts/AudioContext";
-import Sidebar from "@/components/Sidebar";
 import ControlBar from "@/components/ControlBar";
 import { AppSidebar } from "@/components/app-sidebar"
-import { NavActions } from "@/components/nav-actions"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbList,
-  BreadcrumbPage,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
+
 import {
   SidebarInset,
   SidebarProvider,
-  SidebarTrigger,
 } from "@/components/ui/sidebar"
 
 const inter = Inter({ subsets: ["latin"] });
