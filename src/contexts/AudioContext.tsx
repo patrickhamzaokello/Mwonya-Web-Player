@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useRef, ReactNode, useEffect } from 'react';
-import { Howl } from 'howler';
+import { Howl, Howler } from 'howler';
 
 interface Track {
   id: string;
@@ -22,6 +22,7 @@ interface AudioContextType {
   previousTrack: Track | null;
   currentTime: number;
   playlist: Track[] | null;
+  isBuffering: boolean;
   playTrack: (track: Track) => void;
   togglePlay: () => void;
   setVolume: (volume: number) => void;
@@ -43,11 +44,13 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const [volume, setVolumeState] = useState(1);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-  
+  const [isBuffering, setIsBuffering] = useState(false);
+
   const soundRef = useRef<Howl | null>(null);
   const seekTimer = useRef<number>(0);
 
   useEffect(() => {
+    // Cleanup on unmount
     return () => {
       if (soundRef.current) {
         soundRef.current.unload();
@@ -59,58 +62,54 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const playTrack = (track: Track) => {
-    // If there's an existing sound, unload it
+    // Clean up previous sound
     if (soundRef.current) {
       soundRef.current.unload();
-      if (seekTimer.current) {
-        window.clearInterval(seekTimer.current);
-      }
+    }
+    if (seekTimer.current) {
+      window.clearInterval(seekTimer.current);
     }
 
     // Create new Howl instance
-    const sound = new Howl({
+    soundRef.current = new Howl({
       src: [track.path],
-      html5: true, // Enable streaming
+      html5: true,
       volume: volume,
+      onload: () => {
+        setDuration(soundRef.current?.duration() || 0);
+        setIsBuffering(false);
+      },
+      onloaderror: (id, error) => {
+        console.error('Error loading audio:', error);
+        setIsBuffering(false);
+      },
       onplay: () => {
         setIsPlaying(true);
-        // Start tracking current time
-        seekTimer.current = window.setInterval(() => {
-          if (soundRef.current) {
-            const seek = soundRef.current.seek() as number;
-            setCurrentTime(seek || 0);
-          }
-        }, 1000);
+        setIsBuffering(false);
       },
       onpause: () => {
         setIsPlaying(false);
-        if (seekTimer.current) {
-          window.clearInterval(seekTimer.current);
-        }
+      },
+      onstop: () => {
+        setIsPlaying(false);
       },
       onend: () => {
         setIsPlaying(false);
-        if (seekTimer.current) {
-          window.clearInterval(seekTimer.current);
-        }
-        // Play next track if available
         if (nextTrack) {
           playTrack(nextTrack);
         }
       },
-      onload: () => {
-        const duration = sound.duration();
-        setDuration(Number(duration || track.duration));
-      },
-      onstop: () => {
-        setIsPlaying(false);
-        if (seekTimer.current) {
-          window.clearInterval(seekTimer.current);
-        }
-      },
     });
 
-    soundRef.current = sound;
+    // Start tracking current time
+    seekTimer.current = window.setInterval(() => {
+      if (soundRef.current) {
+        setCurrentTime(soundRef.current.seek());
+      }
+    }, 1000);
+
+    // Start playback
+    soundRef.current.play();
     setCurrentTrack(track);
     
     // Update next and previous tracks based on playlist
@@ -121,8 +120,6 @@ export function AudioProvider({ children }: { children: ReactNode }) {
         setNextTrack(currentIndex < playlist.length - 1 ? playlist[currentIndex + 1] : null);
       }
     }
-    
-    sound.play();
   };
 
   const togglePlay = () => {
@@ -137,9 +134,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 
   const setVolume = (newVolume: number) => {
     setVolumeState(newVolume);
-    if (soundRef.current) {
-      soundRef.current.volume(newVolume);
-    }
+    Howler.volume(newVolume);
   };
 
   const seek = (time: number) => {
@@ -194,6 +189,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
         duration: duration.toString(),
         currentTime,
         playlist,
+        isBuffering,
         playTrack,
         togglePlay,
         setVolume,

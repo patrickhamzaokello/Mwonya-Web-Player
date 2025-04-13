@@ -5,6 +5,20 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AudioProvider } from "@/contexts/AudioContext";
 import Sidebar from "@/components/Sidebar";
 import ControlBar from "@/components/ControlBar";
+import { AppSidebar } from "@/components/app-sidebar"
+import { NavActions } from "@/components/nav-actions"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb"
+import { Separator } from "@/components/ui/separator"
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,20 +37,20 @@ export default function RootLayout({
       <body className={`${inter.className} overflow-hidden`}>
         <AuthProvider>
           <AudioProvider>
-            <div className="fixed inset-0 flex bg-black text-white">
-              <div className="flex flex-col w-full h-full">
-                <div className="flex flex-1 overflow-hidden">
-                  <Sidebar />
-                  <main className="flex-1 flex flex-col overflow-hidden">
-                    <ControlBar />
-                    <div className="flex-1 overflow-y-auto p-6">
-                      {/* Main content will be rendered here */}
-                      {children}
-                    </div>
-                  </main>
+            <SidebarProvider>
+              <AppSidebar />
+              <SidebarInset>
+              <ControlBar />
+
+                <div className="flex flex-1 flex-col gap-4">
+                  <div className="overflow-y-auto p-6">
+                    {/* Main content will be rendered here */}
+                    {children}
+                  </div>
+
                 </div>
-              </div>
-            </div>
+              </SidebarInset>
+            </SidebarProvider>
           </AudioProvider>
         </AuthProvider>
       </body>
