@@ -15,7 +15,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Mwonya Player",
-  description: "A beautiful music player inspired by Apple Music",
+  description: "Ugandan Number one Music and Video Platform",
 };
 
 export default function RootLayout({
@@ -25,21 +25,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} overflow-hidden`}>
+      <body className={`${inter.className} overflow-hidden h-screen`}>
         <AuthProvider>
           <AudioProvider>
             <SidebarProvider>
               <AppSidebar />
-              <SidebarInset>
-              <ControlBar />
-
-                <div className="flex flex-1 flex-col gap-4">
-                  <div className="overflow-y-auto p-6">
-                    {/* Main content will be rendered here */}
+              <SidebarInset className="flex flex-col h-screen">
+                <ControlBar />
+                <main className="flex-1 overflow-hidden">
+                  <div className="h-full overflow-y-auto">
                     {children}
                   </div>
-
-                </div>
+                </main>
               </SidebarInset>
             </SidebarProvider>
           </AudioProvider>

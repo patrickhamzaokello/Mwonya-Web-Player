@@ -150,8 +150,8 @@ export default function PlaylistPage() {
           </div>
           
           {/* Playlist Info */}
-          <div className="flex flex-col justify-between flex-1">
-            <div>
+          <div className="flex flex-col justify-between flex-1 relative">
+            <div className="bottom-0 absolute">
               {loading ? (
                 <>
                   <TextSkeleton width="w-64" height="h-8" />
@@ -195,13 +195,7 @@ export default function PlaylistPage() {
                 </>
               )}
             </div>
-            {!loading && (
-              <div className="flex items-center mt-4 md:mt-0">
-                <Button variant="ghost" size="icon">
-                  <MoreHorizontal size={24} className="text-muted-foreground" />
-                </Button>
-              </div>
-            )}
+            
           </div>
         </div>
         
