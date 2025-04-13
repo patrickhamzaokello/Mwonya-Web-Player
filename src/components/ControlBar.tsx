@@ -19,6 +19,7 @@ import {
   Star,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { SidebarTrigger } from "./ui/sidebar"
 
 const ControlBar = () => {
   const {
@@ -123,12 +124,17 @@ const ControlBar = () => {
   }
 
   return (
-    <div className="bg-black text-white flex items-center justify-between sticky bottom-0 z-10 w-full h-[64px] px-4">
+    <div className="bg-background border-b border-border flex items-center justify-between sticky bottom-0 z-10 w-full h-[64px] px-4">
+       <div>
+      <SidebarTrigger />
+
+      </div>
+      
       {/* Left Section - Controls */}
       <div className="flex items-center gap-5 w-[200px]">
         <button
           onClick={toggleShuffle}
-          className={cn("text-gray-400 hover:text-white transition-colors", isShuffleOn && "text-red-500")}
+          className={cn("text-muted-foreground hover:text-foreground transition-colors", isShuffleOn && "text-primary")}
           aria-label="Shuffle"
         >
           <Shuffle size={16} />
@@ -138,7 +144,7 @@ const ControlBar = () => {
           onClick={playPreviousTrack}
           disabled={!previousTrack}
           className={cn(
-            "text-gray-400 hover:text-white transition-colors",
+            "text-muted-foreground hover:text-foreground transition-colors",
             !previousTrack && "opacity-50 cursor-not-allowed",
           )}
           aria-label="Previous"
@@ -149,11 +155,11 @@ const ControlBar = () => {
         <button
           onClick={togglePlay}
           disabled={isBuffering}
-          className="text-white transition-colors"
+          className="text-foreground transition-colors"
           aria-label={isPlaying ? "Pause" : "Play"}
         >
           {isBuffering ? (
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-foreground border-t-transparent rounded-full animate-spin" />
           ) : isPlaying ? (
             <Pause size={20} />
           ) : (
@@ -165,7 +171,7 @@ const ControlBar = () => {
           onClick={playNextTrack}
           disabled={!nextTrack}
           className={cn(
-            "text-gray-400 hover:text-white transition-colors",
+            "text-muted-foreground hover:text-foreground transition-colors",
             !nextTrack && "opacity-50 cursor-not-allowed",
           )}
           aria-label="Next"
@@ -175,7 +181,10 @@ const ControlBar = () => {
 
         <button
           onClick={toggleRepeat}
-          className={cn("text-gray-400 hover:text-white transition-colors", repeatMode > 0 && "text-red-500")}
+          className={cn(
+            "text-muted-foreground hover:text-foreground transition-colors",
+            repeatMode > 0 && "text-primary",
+          )}
           aria-label={repeatMode === 0 ? "Repeat Off" : repeatMode === 1 ? "Repeat All" : "Repeat One"}
         >
           {repeatMode === 2 ? <Repeat1 size={16} /> : <Repeat size={16} />}
@@ -185,7 +194,7 @@ const ControlBar = () => {
       {/* Center Section - Track Info and Progress */}
       <div className="flex items-center flex-1 max-w-3xl">
         {/* Album Art */}
-        <div className="w-12 h-12 bg-gray-800 rounded-sm overflow-hidden flex-shrink-0 mr-4">
+        <div className="w-12 h-12 bg-muted rounded-sm overflow-hidden flex-shrink-0 mr-4">
           {currentTrack?.artworkPath && (
             <Image
               src={currentTrack.artworkPath || "/placeholder.svg"}
@@ -201,11 +210,11 @@ const ControlBar = () => {
         <div className="flex flex-col flex-1">
           <div className="flex items-center justify-between mb-1">
             <div className="flex items-center">
-              <h3 className="text-sm font-medium text-white mr-1">{currentTrack?.title || "No track selected"}</h3>
+              <h3 className="text-sm font-medium text-foreground mr-1">{currentTrack?.title || "No track selected"}</h3>
               {currentTrack && (
                 <>
-                  <span className="text-red-500 mx-1">•••</span>
-                  <p className="text-sm text-red-500">{currentTrack.artist}</p>
+                  <span className="text-primary mx-1">-</span>
+                  <p className="text-sm text-primary">{currentTrack.artist}</p>
                 </>
               )}
             </div>
@@ -214,33 +223,38 @@ const ControlBar = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={toggleLike}
-                  className={cn("text-gray-400 hover:text-white transition-colors", isLiked && "text-red-500")}
+                  className={cn(
+                    "text-muted-foreground hover:text-foreground transition-colors",
+                    isLiked && "text-primary",
+                  )}
                   aria-label={isLiked ? "Unlike" : "Like"}
                 >
-                  <Star size={16} className={isLiked ? "fill-red-500" : ""} />
+                  <Star size={16} className={isLiked ? "fill-primary" : ""} />
                 </button>
-                <span className="text-xs font-medium bg-red-500 text-white px-2 py-0.5 rounded">PREVIEW</span>
+                <span className="text-xs font-medium bg-primary text-primary-foreground px-2 py-0.5 rounded">
+                  PREVIEW
+                </span>
               </div>
             )}
           </div>
 
           {/* Progress Bar */}
           <div className="flex items-center w-full gap-2">
-            <span className="text-xs text-gray-400 w-8">{formatTime(currentTime)}</span>
+            <span className="text-xs text-muted-foreground w-8">{formatTime(currentTime)}</span>
 
             <div
               ref={progressRef}
-              className="flex-1 h-1 bg-gray-700 rounded-full overflow-hidden cursor-pointer group relative"
+              className="flex-1 h-1 bg-muted rounded-full overflow-hidden cursor-pointer group relative"
               onClick={handleProgressClick}
               onMouseDown={handleProgressDragStart}
             >
               <div
-                className="h-full bg-white group-hover:bg-red-500 transition-colors"
+                className="h-full bg-foreground group-hover:bg-primary transition-colors"
                 style={{ width: `${Number(duration) > 0 ? (currentTime / Number(duration)) * 100 : 0}%` }}
               />
               <div
                 className={cn(
-                  "absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity",
+                  "absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-foreground group-hover:bg-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity",
                   isDragging && "opacity-100",
                 )}
                 style={{
@@ -250,7 +264,7 @@ const ControlBar = () => {
               />
             </div>
 
-            <span className="text-xs text-gray-400 w-8 text-right">{formatTime(Number(duration))}</span>
+            <span className="text-xs text-muted-foreground w-8 text-right">{formatTime(Number(duration))}</span>
           </div>
         </div>
       </div>
@@ -259,7 +273,7 @@ const ControlBar = () => {
       <div className="flex items-center gap-4 w-[200px] justify-end">
         <button
           onClick={toggleLyrics}
-          className={cn("text-gray-400 hover:text-white transition-colors", showLyrics && "text-red-500")}
+          className={cn("text-muted-foreground hover:text-foreground transition-colors", showLyrics && "text-primary")}
           aria-label="Comments"
         >
           <MessageSquare size={18} />
@@ -267,14 +281,14 @@ const ControlBar = () => {
 
         <button
           onClick={toggleQueue}
-          className={cn("text-gray-400 hover:text-white transition-colors", showQueue && "text-red-500")}
+          className={cn("text-muted-foreground hover:text-foreground transition-colors", showQueue && "text-primary")}
           aria-label="Queue"
         >
           <ListMusic size={18} />
         </button>
 
         <div className="flex items-center gap-2">
-          <Volume2 size={18} className="text-gray-400" />
+          <Volume2 size={18} className="text-muted-foreground" />
           <input
             type="range"
             min="0"
@@ -282,15 +296,15 @@ const ControlBar = () => {
             step="0.01"
             value={volume}
             onChange={handleVolumeChange}
-            className="w-20 h-1 appearance-none bg-gray-700 rounded-full outline-none 
+            className="w-20 h-1 appearance-none bg-muted rounded-full outline-none 
               [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-2.5 
               [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:rounded-full 
-              [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:cursor-pointer"
+              [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:cursor-pointer"
           />
         </div>
 
         {user && (
-          <div className="w-8 h-8 rounded-full overflow-hidden cursor-pointer border border-gray-700 hover:border-gray-500 transition-colors">
+          <div className="w-8 h-8 rounded-full overflow-hidden cursor-pointer border border-border hover:border-muted-foreground transition-colors">
             {user.image ? (
               <Image
                 src={user.image || "/placeholder.svg"}
@@ -300,8 +314,8 @@ const ControlBar = () => {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full bg-gray-700 flex items-center justify-center">
-                <span className="text-xs font-bold text-white">{user.name[0]}</span>
+              <div className="w-full h-full bg-muted flex items-center justify-center">
+                <span className="text-xs font-bold text-foreground">{user.name[0]}</span>
               </div>
             )}
           </div>
