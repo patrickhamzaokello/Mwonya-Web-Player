@@ -122,6 +122,7 @@ const ControlBar = () => {
   const toggleLike = () => {
     setIsLiked(!isLiked)
   }
+  
 
   return (
     <div className="bg-background border-b border-border flex items-center justify-between sticky bottom-0 z-10 w-full h-[64px] px-4">
