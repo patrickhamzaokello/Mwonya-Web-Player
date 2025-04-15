@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Play } from "lucide-react"
@@ -10,7 +10,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { Track } from "@/lib/types"
 import { useAudio } from "@/contexts/AudioContext"
-
 
 interface NewReleasesProps {
   data: {
@@ -44,7 +43,7 @@ interface NewReleasesProps {
 }
 
 export function NewReleases({ data }: NewReleasesProps) {
-  const { playTrack, isPlaying, currentTrack, setPlaylist } = useAudio()
+  const { playTrack, setPlaylist } = useAudio()
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0)
   const [playlist, setPlaylistState] = useState<Track[]>([])
 
@@ -64,20 +63,20 @@ export function NewReleases({ data }: NewReleasesProps) {
   }
 
   return (
-    <div className="mb-8">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-2xl font-bold">{data.heading}</h2>
+    <div className="w-full mb-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold">{data.heading}</h2>
         <Link href="/new-releases" className="text-sm font-medium text-muted-foreground hover:underline">
           View all
         </Link>
       </div>
 
-      <ScrollArea >
+      <ScrollArea className="w-full">
         <div className="flex">
           {data.HomeRelease.map((release) => (
-            <Card key={release.id} className="min-w-[280px] max-w-[280px] border-none bg-muted/40 shadow-none p-0 m-0  mr-4">
-              <CardContent className="px-0">
-                <div className="group relative mb-3 aspect-square overflow-hidden rounded-md">
+            <Card key={release.id} className="min-w-[280px] max-w-[280px] border-none bg-muted/40 shadow-none">
+              <CardContent className="p-3">
+                <div className="group relative mb-2 aspect-square overflow-hidden rounded-md">
                   <Image
                     src={release.artworkPath || "/placeholder.svg"}
                     alt={release.title}
@@ -89,7 +88,7 @@ export function NewReleases({ data }: NewReleasesProps) {
                     <Button
                       size="icon"
                       variant="secondary"
-                      className="h-12 w-12 rounded-full"
+                      className="h-10 w-10 rounded-full"
                       onClick={() => handlePlayRelease(release.Tracks.map(track => ({ 
                         ...track, 
                         id: track.id.toString(), 
@@ -97,7 +96,7 @@ export function NewReleases({ data }: NewReleasesProps) {
                         explicit: false 
                       })), 0)} // Play the first track of the release
                     >
-                      <Play className="h-5 w-5 fill-current" />
+                      <Play className="h-4 w-4 fill-current" />
                     </Button>
                   </div>
                   {release.exclusive && (
@@ -106,22 +105,22 @@ export function NewReleases({ data }: NewReleasesProps) {
                     </div>
                   )}
                 </div>
-                <div className="mb-2 flex items-center gap-2">
+                <div className="flex items-center gap-1 mb-1">
                   <div className="text-xs font-medium text-muted-foreground">{release.heading}</div>
                 </div>
-                <Link href={`/album/${release.id}`} className="mb-1 line-clamp-1 font-semibold hover:underline">
+                <Link href={`/album/${release.id}`} className="line-clamp-1 font-semibold hover:underline text-sm">
                   {release.title}
                 </Link>
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-5 w-5">
+                <div className="flex items-center gap-1 mt-1">
+                  <Avatar className="h-4 w-4">
                     <AvatarImage src={release.artistArtwork || "/placeholder.svg"} alt={release.artist} />
                     <AvatarFallback>{release.artist.charAt(0)}</AvatarFallback>
                   </Avatar>
-                  <Link href={`/artist/${release.artistId}`} className="text-sm text-muted-foreground hover:underline">
+                  <Link href={`/artist/${release.artistId}`} className="text-xs text-muted-foreground hover:underline">
                     {release.artist}
                   </Link>
                 </div>
-                <div className="mt-2 text-xs text-muted-foreground">{release.tag}</div>
+                <div className="mt-1 text-xs text-muted-foreground">{release.tag}</div>
               </CardContent>
             </Card>
           ))}
