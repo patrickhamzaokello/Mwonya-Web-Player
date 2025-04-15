@@ -12,7 +12,7 @@ export interface Track {
     duration: string 
     lyrics?: string
     path: string 
-    totalplays: number
+    totalplays: number| string
     albumID: string
     explicit: boolean
   }

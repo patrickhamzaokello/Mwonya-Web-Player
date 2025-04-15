@@ -95,8 +95,12 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       },
       onend: () => {
         setIsPlaying(false);
-        if (nextTrack) {
-          playTrack(nextTrack);
+        if (playlist) {
+          const currentIndex = playlist.findIndex(t => t.id === track.id);
+          if (currentIndex < playlist.length - 1) {
+            const next = playlist[currentIndex + 1];
+            playTrack(next);
+          }
         }
       },
     });
@@ -137,13 +141,22 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     Howler.volume(newVolume);
   };
 
+  const isSeekingRef = useRef(false);
+
+  // Update your seek function:
   const seek = (time: number) => {
     if (soundRef.current) {
+      isSeekingRef.current = true;
       soundRef.current.seek(time);
       setCurrentTime(time);
+      
+      // Small timeout to prevent interval from interfering
+      setTimeout(() => {
+        isSeekingRef.current = false;
+      }, 100);
     }
   };
-
+  
   const setPlaylist = (newPlaylist: Track[] | null) => {
     setPlaylistState(newPlaylist);
     if (newPlaylist && newPlaylist.length > 0) {
@@ -157,13 +170,16 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   };
 
   const playNextTrack = () => {
-    if (nextTrack) {
-      playTrack(nextTrack);
-      if (playlist) {
-        const currentIndex = playlist.findIndex(track => track.id === nextTrack.id);
-        setPreviousTrack(currentTrack);
-        setNextTrack(currentIndex < playlist.length - 1 ? playlist[currentIndex + 1] : null);
-      }
+    if (!playlist || !currentTrack) return;
+    
+    const currentIndex = playlist.findIndex(t => t.id === currentTrack.id);
+    if (currentIndex < playlist.length - 1) {
+      const next = playlist[currentIndex + 1];
+      playTrack(next);
+      
+      // Update next/previous track references
+      setPreviousTrack(currentTrack);
+      setNextTrack(currentIndex + 1 < playlist.length - 1 ? playlist[currentIndex + 2] : null);
     }
   };
 

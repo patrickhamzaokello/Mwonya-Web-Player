@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    domains: ['assets.mwonya.com','mwonya-kasfa-assets-store.s3.us-east-1.amazonaws.com'],
+    domains: ['assets.mwonya.com','artist.mwonya.com','mwonya-kasfa-assets-store.s3.us-east-1.amazonaws.com'],
   },
 };
 

@@ -33,7 +33,7 @@ export default function RootLayout({
               <SidebarInset className="flex flex-col h-screen">
                 <ControlBar />
                 <main className="flex-1 overflow-hidden">
-                  <div className="h-full overflow-y-auto">
+                  <div className="h-full overflow-y-auto px-6">
                     {children}
                   </div>
                 </main>
