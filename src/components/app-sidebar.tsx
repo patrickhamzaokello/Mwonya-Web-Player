@@ -3,16 +3,26 @@
 import * as React from "react"
 import {
   AudioWaveform,
+  Blend,
   Blocks,
+  BoomBox,
   Calendar,
   Command,
+  Drum,
+  GalleryVerticalEnd,
   Home,
   Inbox,
+  LibraryBig,
+  LocateFixed,
   MessageCircleQuestion,
+  Podcast,
   Search,
   Settings2,
+  Share,
   Sparkles,
   Trash2,
+  UserRoundCheck,
+  Waypoints,
 } from "lucide-react"
 
 import { NavFavorites } from "@/components/nav-favorites"
@@ -55,42 +65,47 @@ const data = {
     {
       title: "Home",
       url: "/",
-      icon: Home,
+      icon: LibraryBig,
     },
     {
-      title: "New",
-      url: "new",
+      title: "Music",
+      url: "music",
       icon: Sparkles,
       isActive: true,
     },
     {
       title: "Radio",
       url: "radio",
-      icon: Inbox,
+      icon: BoomBox,
+      badge: "10",
+    },
+    {
+      title: "Podcast",
+      url: "podcast",
+      icon: Podcast,
+      badge: "10",
+    },
+    {
+      title: "Mixtape",
+      url: "mixtape",
+      icon: Drum,
       badge: "10",
     },
   ],
   navSecondary: [
-    {
-      title: "Calendar",
-      url: "#",
-      icon: Calendar,
-    },
+    
     {
       title: "Settings",
       url: "#",
       icon: Settings2,
     },
+ 
     {
-      title: "Templates",
+      title: "Share Link",
       url: "#",
-      icon: Blocks,
+      icon: Waypoints,
     },
-    {
-      title: "Trash",
-      url: "#",
-      icon: Trash2,
-    },
+    
     {
       title: "Help",
       url: "#",
@@ -98,10 +113,10 @@ const data = {
     },
   ],
   mlibrary: [
-    { name: "Artists", url: "/library/artists",icon: MessageCircleQuestion },
-    { name: "All Playlists", url: "/library/made-for-you", icon: MessageCircleQuestion },
-    { name: "Daylist", url: "/library/made-for-you", icon: MessageCircleQuestion },
-    { name: "Made For You", url: "/library/made-for-you", icon: MessageCircleQuestion},
+    { name: "Artists", url: "/library/artists",icon: UserRoundCheck },
+    { name: "Daylist", url: "/library/made-for-you", icon: Blend },
+    { name: "All Playlists", url: "/playlist", icon: GalleryVerticalEnd },
+    { name: "Made For You", url: "/library/made-for-you", icon: LocateFixed},
   ],
   playlist_listing: [
   

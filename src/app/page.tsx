@@ -23,7 +23,7 @@ import React from "react"
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-background pb-24">
+    <main className="min-h-screen bg-background pb-24 w-full overflow-x-hidden">
       <Suspense fallback={<HomeSkeleton />}>
         <HomeContent />
       </Suspense>
@@ -46,51 +46,142 @@ function HomeContent() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      {data.featured.map((section, index) => {
-        switch (section.type) {
-          case "hero":
-            return <HeroSection key={index} data={{ ...section, heading: section.heading || "Default Heading", subheading: section.subheading || "Default Subheading" }} />
-          case "newRelease":
-            return <NewReleases key={index} data={{ ...section, heading: section.heading || "Default Heading", HomeRelease: section.HomeRelease || [] }} />
-          case "slider":
-            return <DiscoverSlider key={index} data={{ ...section, heading: section.heading || "Default Heading", featured_sliderBanners: section.featured_sliderBanners || [] }} />
+   <>
+    <div className="max-w-full w-full px-4 py-6 mx-auto lg:container overflow-hidden">
+      <div className="flex flex-col space-y-6">
+        {data.featured.map((section, index) => {
+          switch (section.type) {
+            case "hero":
+              return <HeroSection 
+                key={index} 
+                data={{ 
+                  ...section, 
+                  heading: section.heading || "Default Heading", 
+                  subheading: section.subheading || "Default Subheading" 
+                }} 
+              />
+            case "newRelease":
+              return <NewReleases 
+                key={index} 
+                data={{ 
+                  ...section, 
+                  heading: section.heading || "Default Heading", 
+                  HomeRelease: section.HomeRelease || [] 
+                }} 
+              />
+            case "slider":
+              return <DiscoverSlider 
+                key={index} 
+                data={{ 
+                  ...section, 
+                  heading: section.heading || "Default Heading", 
+                  featured_sliderBanners: section.featured_sliderBanners || [] 
+                }} 
+              />
             case "artist":
-            return <FeaturedArtists key={index} data={{ ...section, heading: section.heading || "Default Heading", featuredArtists: section.featuredArtists || [] }} />
-          case "genre":
-            return <FeaturedGenres key={index} data={{ ...section, heading: section.heading || "Default Heading", featuredGenres: section.featuredGenres || [] }} />
-          case "recently":
-            return <RecentlyPlayed key={index} data={{ ...section, heading: section.heading || "Default Heading", subheading: section.subheading || "Default Subheading" }} />
-          case "trend":
-            if (section.heading === "Trending Now") {
-              return <TrendingTracks key={index} data={{ ...section, heading: section.heading || "Default Heading", Tracks: section.Tracks || [] }} />
-            } else if (section.heading === "You Might Like") {
-              return <RecommendedTracks key={index} data={{ ...section, heading: section.heading || "Default Heading", Tracks: section.Tracks || [] }} />
-            }
-            return null
-          case "albums":
-            if (section.heading === "Exclusive Release") {
-              return <ExclusiveReleases key={index} data={{ ...section, heading: section.heading || "Default Heading", featuredAlbums: section.featuredAlbums || [] }} />
-            } else if (section.heading === "Featured Albums") {
-              return <FeaturedAlbums key={index} data={{ ...section, heading: section.heading || "Default Heading", featuredAlbums: section.featuredAlbums || [] }} />
-            }
-            return null
-          case "playlist":
-            return <FeaturedPlaylists key={index} data={{ ...section, heading: section.heading || "Default Heading", featuredPlaylists: section.featuredPlaylists || [] }} />
-          case "artist_more_like":
-            return <ArtistRecommendations key={index} data={{ 
-              ...section, 
-              heading: section.heading || "Default Heading", 
-              subheading: section.subheading || "Default Subheading", 
-              featuredArtists: section.featuredArtists || [] 
-            }} />
-          case "djs":
-            return <FeaturedMixtapes key={index} data={{ ...section, heading: section.heading || "Default Heading", FeaturedDjMixes: section.FeaturedDjMixes || [] }} />
-          default:
-            return null
-        }
-      })}
+              return <FeaturedArtists 
+                key={index} 
+                data={{ 
+                  ...section, 
+                  heading: section.heading || "Default Heading", 
+                  featuredArtists: section.featuredArtists || [] 
+                }} 
+              />
+            case "genre":
+              return <FeaturedGenres 
+                key={index} 
+                data={{ 
+                  ...section, 
+                  heading: section.heading || "Default Heading", 
+                  featuredGenres: section.featuredGenres || [] 
+                }} 
+              />
+            case "recently":
+              return <RecentlyPlayed 
+                key={index} 
+                data={{ 
+                  ...section, 
+                  heading: section.heading || "Default Heading", 
+                  subheading: section.subheading || "Default Subheading" 
+                }} 
+              />
+            case "trend":
+              if (section.heading === "Trending Now") {
+                return <TrendingTracks 
+                  key={index} 
+                  data={{ 
+                    ...section, 
+                    heading: section.heading || "Default Heading", 
+                    Tracks: section.Tracks || [] 
+                  }} 
+                />
+              } else if (section.heading === "You Might Like") {
+                return <RecommendedTracks 
+                  key={index} 
+                  data={{ 
+                    ...section, 
+                    heading: section.heading || "Default Heading", 
+                    Tracks: section.Tracks || [] 
+                  }} 
+                />
+              }
+              return null
+            case "albums":
+              if (section.heading === "Exclusive Release") {
+                return <ExclusiveReleases 
+                  key={index} 
+                  data={{ 
+                    ...section, 
+                    heading: section.heading || "Default Heading", 
+                    featuredAlbums: section.featuredAlbums || [] 
+                  }} 
+                />
+              } else if (section.heading === "Featured Albums") {
+                return <FeaturedAlbums 
+                  key={index} 
+                  data={{ 
+                    ...section, 
+                    heading: section.heading || "Default Heading", 
+                    featuredAlbums: section.featuredAlbums || [] 
+                  }} 
+                />
+              }
+              return null
+            case "playlist":
+              return <FeaturedPlaylists 
+                key={index} 
+                data={{ 
+                  ...section, 
+                  heading: section.heading || "Default Heading", 
+                  featuredPlaylists: section.featuredPlaylists || [] 
+                }} 
+              />
+            case "artist_more_like":
+              return <ArtistRecommendations 
+                key={index} 
+                data={{ 
+                  ...section, 
+                  heading: section.heading || "Default Heading", 
+                  subheading: section.subheading || "Default Subheading", 
+                  featuredArtists: section.featuredArtists || [] 
+                }} 
+              />
+            case "djs":
+              return <FeaturedMixtapes 
+                key={index} 
+                data={{ 
+                  ...section, 
+                  heading: section.heading || "Default Heading", 
+                  FeaturedDjMixes: section.FeaturedDjMixes || [] 
+                }} 
+              />
+            default:
+              return null
+          }
+        })}
+      </div>
     </div>
+   </>
   )
 }
 

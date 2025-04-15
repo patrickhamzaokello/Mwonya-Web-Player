@@ -133,8 +133,8 @@ const ControlBar = () => {
     setIsLiked(!isLiked)
   }
 
-   // Toggle fullscreen player
-   const toggleFullScreenPlayer = () => {
+  // Toggle fullscreen player
+  const toggleFullScreenPlayer = () => {
     setShowFullScreenPlayer(!showFullScreenPlayer)
   }
 
@@ -143,18 +143,17 @@ const ControlBar = () => {
     setShowFullScreenPlayer(false)
   }
 
-
   return (
     <>
       {showFullScreenPlayer && <FullScreenPlayer onClose={closeFullScreenPlayer} />}
       <div className="bg-background border-b border-border flex items-center justify-between sticky bottom-0 z-10 w-full h-[64px] px-4">
-        <div>
+        {/* Left Section - Sidebar Toggle */}
+        <div className="flex-shrink-0 w-10">
           <SidebarTrigger />
-
         </div>
 
-        {/* Left Section - Controls */}
-        <div className="flex items-center gap-5 w-[200px]">
+        {/* Media Controls */}
+        <div className="flex items-center gap-3 flex-shrink-0 lg:gap-4">
           <button
             onClick={toggleShuffle}
             className={cn("text-muted-foreground hover:text-foreground transition-colors", isShuffleOn && "text-primary")}
@@ -223,38 +222,40 @@ const ControlBar = () => {
         </div>
 
         {/* Center Section - Track Info and Progress */}
-        <div className="flex items-center flex-1 max-w-3xl">
+        <div className="flex items-center flex-1 mx-4 min-w-0">
           {/* Album Art */}
           <div
-            className="w-12 h-12 bg-muted rounded-sm overflow-hidden flex-shrink-0 mr-4 cursor-pointer hover:opacity-80 transition-opacity"
+            className="w-10 h-10 bg-muted rounded-sm overflow-hidden flex-shrink-0 mr-3 cursor-pointer hover:opacity-80 transition-opacity hidden sm:block"
             onClick={toggleFullScreenPlayer}
           >
             {currentTrack?.artworkPath && (
               <Image
                 src={currentTrack.artworkPath || "/placeholder.svg"}
                 alt={currentTrack.title}
-                width={48}
-                height={48}
+                width={40}
+                height={40}
                 className="object-cover w-full h-full"
               />
             )}
           </div>
 
           {/* Track Info and Progress */}
-          <div className="flex flex-col flex-1">
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center">
-                <h3 className="text-sm font-medium text-foreground mr-1">{currentTrack?.title || "No track selected"}</h3>
+          <div className="flex flex-col flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-1 w-full">
+              <div className="flex items-center overflow-hidden">
+                <h3 className="text-sm font-medium text-foreground truncate max-w-xs">
+                  {currentTrack?.title || "No track selected"}
+                </h3>
                 {currentTrack && (
                   <>
-                    <span className="text-primary mx-1">-</span>
-                    <p className="text-sm text-primary">{currentTrack.artist}</p>
+                    <span className="text-primary mx-1 flex-shrink-0">-</span>
+                    <p className="text-sm text-primary truncate">{currentTrack.artist}</p>
                   </>
                 )}
               </div>
 
               {currentTrack && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                   <button
                     onClick={toggleLike}
                     className={cn(
@@ -265,7 +266,7 @@ const ControlBar = () => {
                   >
                     <Star size={16} className={isLiked ? "fill-primary" : ""} />
                   </button>
-                  <span className="text-xs font-medium bg-primary text-primary-foreground px-2 py-0.5 rounded">
+                  <span className="text-xs font-medium bg-primary text-primary-foreground px-2 py-0.5 rounded hidden sm:inline-block">
                     MWONYA
                   </span>
                 </div>
@@ -274,7 +275,7 @@ const ControlBar = () => {
 
             {/* Progress Bar */}
             <div className="flex items-center w-full gap-2">
-              <span className="text-xs text-muted-foreground w-8">{formatTime(currentTime)}</span>
+              <span className="text-xs text-muted-foreground w-8 flex-shrink-0">{formatTime(currentTime)}</span>
 
               <div
                 ref={progressRef}
@@ -298,16 +299,16 @@ const ControlBar = () => {
                 />
               </div>
 
-              <span className="text-xs text-muted-foreground w-8 text-right">{formatTime(Number(duration))}</span>
+              <span className="text-xs text-muted-foreground w-8 text-right flex-shrink-0">{formatTime(Number(duration))}</span>
             </div>
           </div>
         </div>
 
         {/* Right Section - Volume and Additional Controls */}
-        <div className="flex items-center gap-4 w-[200px] justify-end">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={toggleLyrics}
-            className={cn("text-muted-foreground hover:text-foreground transition-colors", showLyrics && "text-primary")}
+            className={cn("text-muted-foreground hover:text-foreground transition-colors hidden sm:block", showLyrics && "text-primary")}
             aria-label="Comments"
           >
             <MessageSquare size={18} />
@@ -321,8 +322,8 @@ const ControlBar = () => {
             <ListMusic size={18} />
           </button>
 
-          <div className="flex items-center gap-2">
-            <Volume2 size={18} className="text-muted-foreground" />
+          <div className="flex items-center gap-1 ml-1 hidden md:flex">
+            <Volume2 size={16} className="text-muted-foreground" />
             <input
               type="range"
               min="0"
@@ -330,7 +331,7 @@ const ControlBar = () => {
               step="0.01"
               value={volume}
               onChange={handleVolumeChange}
-              className="w-20 h-1 appearance-none bg-muted rounded-full outline-none 
+              className="w-16 h-1 appearance-none bg-muted rounded-full outline-none 
               [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-2.5 
               [&::-webkit-slider-thumb]:h-2.5 [&::-webkit-slider-thumb]:rounded-full 
               [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:cursor-pointer"
@@ -338,7 +339,7 @@ const ControlBar = () => {
           </div>
 
           {user && (
-            <div className="w-8 h-8 rounded-full overflow-hidden cursor-pointer border border-border hover:border-muted-foreground transition-colors">
+            <div className="w-8 h-8 rounded-full overflow-hidden cursor-pointer border border-border hover:border-muted-foreground transition-colors ml-2">
               {user.image ? (
                 <Image
                   src={user.image || "/placeholder.svg"}
