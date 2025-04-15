@@ -50,37 +50,42 @@ function HomeContent() {
       {data.featured.map((section, index) => {
         switch (section.type) {
           case "hero":
-            return <HeroSection key={index} data={section} />
+            return <HeroSection key={index} data={{ ...section, heading: section.heading || "Default Heading", subheading: section.subheading || "Default Subheading" }} />
           case "newRelease":
-            return <NewReleases key={index} data={section} />
+            return <NewReleases key={index} data={{ ...section, heading: section.heading || "Default Heading", HomeRelease: section.HomeRelease || [] }} />
           case "slider":
-            return <DiscoverSlider key={index} data={section} />
-          case "artist":
-            return <FeaturedArtists key={index} data={section} />
+            return <DiscoverSlider key={index} data={{ ...section, heading: section.heading || "Default Heading", featured_sliderBanners: section.featured_sliderBanners || [] }} />
+            case "artist":
+            return <FeaturedArtists key={index} data={{ ...section, heading: section.heading || "Default Heading", featuredArtists: section.featuredArtists || [] }} />
           case "genre":
-            return <FeaturedGenres key={index} data={section} />
+            return <FeaturedGenres key={index} data={{ ...section, heading: section.heading || "Default Heading", featuredGenres: section.featuredGenres || [] }} />
           case "recently":
-            return <RecentlyPlayed key={index} data={section} />
+            return <RecentlyPlayed key={index} data={{ ...section, heading: section.heading || "Default Heading", subheading: section.subheading || "Default Subheading" }} />
           case "trend":
             if (section.heading === "Trending Now") {
-              return <TrendingTracks key={index} data={section} />
+              return <TrendingTracks key={index} data={{ ...section, heading: section.heading || "Default Heading", Tracks: section.Tracks || [] }} />
             } else if (section.heading === "You Might Like") {
-              return <RecommendedTracks key={index} data={section} />
+              return <RecommendedTracks key={index} data={{ ...section, heading: section.heading || "Default Heading", Tracks: section.Tracks || [] }} />
             }
             return null
           case "albums":
             if (section.heading === "Exclusive Release") {
-              return <ExclusiveReleases key={index} data={section} />
+              return <ExclusiveReleases key={index} data={{ ...section, heading: section.heading || "Default Heading", featuredAlbums: section.featuredAlbums || [] }} />
             } else if (section.heading === "Featured Albums") {
-              return <FeaturedAlbums key={index} data={section} />
+              return <FeaturedAlbums key={index} data={{ ...section, heading: section.heading || "Default Heading", featuredAlbums: section.featuredAlbums || [] }} />
             }
             return null
           case "playlist":
-            return <FeaturedPlaylists key={index} data={section} />
+            return <FeaturedPlaylists key={index} data={{ ...section, heading: section.heading || "Default Heading", featuredPlaylists: section.featuredPlaylists || [] }} />
           case "artist_more_like":
-            return <ArtistRecommendations key={index} data={section} />
+            return <ArtistRecommendations key={index} data={{ 
+              ...section, 
+              heading: section.heading || "Default Heading", 
+              subheading: section.subheading || "Default Subheading", 
+              featuredArtists: section.featuredArtists || [] 
+            }} />
           case "djs":
-            return <FeaturedMixtapes key={index} data={section} />
+            return <FeaturedMixtapes key={index} data={{ ...section, heading: section.heading || "Default Heading", FeaturedDjMixes: section.FeaturedDjMixes || [] }} />
           default:
             return null
         }
@@ -89,8 +94,24 @@ function HomeContent() {
   )
 }
 
+type HomeData = {
+  featured: Array<{
+    type: string
+    heading?: string
+    subheading?: string
+    HomeRelease?: Array<any>
+    featured_sliderBanners?: Array<any>
+    featuredArtists?: Array<any>
+    featuredGenres?: Array<any>
+    Tracks?: Array<any>
+    featuredAlbums?: Array<any>
+    featuredPlaylists?: Array<any>
+    FeaturedDjMixes?: Array<any>
+  }>
+}
+
 function useHomeData(userID: string) {
-  const [data, setData] = React.useState(null)
+  const [data, setData] = React.useState<HomeData | null>(null)
   const [error, setError] = React.useState<Error | null>(null)
 
   React.useEffect(() => {

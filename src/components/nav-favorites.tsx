@@ -3,6 +3,7 @@
 import {
   ArrowUpRight,
   Link,
+  LucideIcon,
   MoreHorizontal,
   StarOff,
   Trash2,
@@ -26,12 +27,12 @@ import {
 } from "@/components/ui/sidebar"
 
 export function NavFavorites({
-  favorites,
+  mlibrary,
 }: {
-  favorites: {
+  mlibrary: {
     name: string
     url: string
-    emoji: string
+    icon: LucideIcon
   }[]
 }) {
   const { isMobile } = useSidebar()
@@ -40,11 +41,11 @@ export function NavFavorites({
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>Favorites</SidebarGroupLabel>
       <SidebarMenu>
-        {favorites.map((item) => (
+        {mlibrary.map((item) => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild>
               <a href={item.url} title={item.name}>
-                <span>{item.emoji}</span>
+              <item.icon />
                 <span>{item.name}</span>
               </a>
             </SidebarMenuButton>

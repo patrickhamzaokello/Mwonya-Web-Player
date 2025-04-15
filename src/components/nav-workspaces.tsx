@@ -19,9 +19,9 @@ import {
 } from "@/components/ui/sidebar"
 
 export function NavWorkspaces({
-  workspaces,
+  playlist_listing,
 }: {
-  workspaces: {
+  playlist_listing: {
     name: string
     emoji: React.ReactNode
     pages: {
@@ -35,7 +35,7 @@ export function NavWorkspaces({
       <SidebarGroupLabel>Workspaces</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
-          {workspaces.map((workspace) => (
+          {playlist_listing.map((workspace) => (
             <Collapsible key={workspace.name}>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
