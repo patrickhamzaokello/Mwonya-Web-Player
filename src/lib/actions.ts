@@ -105,7 +105,7 @@ export interface HomeData {
 
 export async function fetchHomeData(userID: string, page = 1): Promise<HomeData> {
   try {
-    const response = await axios.get(`https://api.mwonya.com/Requests/endpoints/allcombined.php`, {
+    const response = await axios.get(`https://api.mwonya.com/v1/Requests/endpoints/allcombined.php`, {
       params: {
         page,
         userID: userID,
@@ -123,7 +123,7 @@ export async function fetchHomeData(userID: string, page = 1): Promise<HomeData>
 export async function fetchPlaylistData(playlistId: string, page: number = 1) {
   try {
     const response = await axios.get(
-      `https://api.mwonya.com/Requests/endpoints/selectedPlaylist.php`,
+      `https://api.mwonya.com/v1/Requests/endpoints/selectedPlaylist.php`,
       {
         params: {
           page,
