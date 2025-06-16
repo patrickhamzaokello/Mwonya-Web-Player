@@ -4,10 +4,10 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Play, MoreHorizontal, Music, Shuffle } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { fetchPlaylistData } from "@/lib/actions"
-import { formatTime } from "@/lib/utils"
+import { fetchPlaylistData, Track } from "@/lib/actions"
+import { customLoader, formatTime } from "@/lib/utils"
 import { useAudio } from "@/contexts/AudioContext"
-import { PlaylistInfo, Track } from "@/lib/types"
+import { PlaylistInfo } from "@/lib/types"
 
 // Skeleton components for loading state
 const CoverSkeleton = () => (
@@ -136,6 +136,7 @@ export default function PlaylistPage() {
                 </div>
                 {playlistInfo.cover && (
                   <Image
+                  loader={customLoader}
                     src={playlistInfo.cover}
                     alt={playlistInfo.name}
                     fill
@@ -229,7 +230,8 @@ export default function PlaylistPage() {
                     {track.artworkPath ? (
                       <Image
                         src={track.artworkPath}
-                        alt={track.id}
+                        alt={"track artwork"}
+                        loader={customLoader}
                         width={40}
                         height={40}
                         className="object-cover rounded"
