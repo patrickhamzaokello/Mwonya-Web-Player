@@ -1,21 +1,8 @@
 // Types for the music player application
 
-export interface Track {
-    id: string
-    title: string
-    artist: string
-    artistID: string 
-    album: string
-    artworkPath: string
-    genre: string
-    genreID: string 
-    duration: string 
-    lyrics?: string
-    path: string 
-    totalplays: number| string
-    albumID: string
-    explicit: boolean
-  }
+import { Track } from "./actions"
+
+
   
   export interface PlaylistInfo {
     id: string

@@ -8,37 +8,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
-import { Track } from "@/lib/types"
 import { useAudio } from "@/contexts/AudioContext"
+import { AlbumRelease, Track } from "@/lib/actions"
+import { customLoader } from "@/lib/utils"
 
 interface NewReleasesProps {
   data: {
     heading: string
-    HomeRelease: Array<{
-      id: string
-      heading: string
-      title: string
-      artworkPath: string
-      tag: string
-      exclusive: boolean
-      artistId: string
-      artist: string
-      artistArtwork: string
-      Tracks: Array<{
-        id: number
-        title: string
-        artist: string
-        artistID: string
-        album: string
-        artworkPath: string
-        genre: string
-        genreID: number
-        duration: string
-        path: string
-        totalplays: number
-        albumID: string
-      }>
-    }>
+    type: "newRelease"
+    HomeRelease: AlbumRelease[]
   }
 }
 
@@ -47,19 +25,25 @@ export function NewReleases({ data }: NewReleasesProps) {
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0)
   const [playlist, setPlaylistState] = useState<Track[]>([])
 
+ 
+  
+
   const handlePlayRelease = (tracks: Track[], startIndex: number) => {
     // Transform tracks to ensure all necessary fields are included
     const transformedTracks = tracks.map(track => ({
       ...track,
-      id: track.id.toString(), // Ensure ID is a string
-      genreID: track.genreID.toString(), // Ensure genreID is a string
-      explicit: false, // Add explicit field if needed
+      id: track.id.toString(),
+      genreID: track.genreID?.toString() || "",
+      explicit: false,
+      lyrics: null,
+      artworkPath: track.artworkPath || "",
+      albumID: track.albumID || ""
     }))
 
-    setPlaylist(transformedTracks) // Set the playlist in the audio context
-    setPlaylistState(transformedTracks) // Update local playlist state
-    setCurrentTrackIndex(startIndex) // Set the current track index
-    playTrack(transformedTracks[startIndex]) // Play the selected track
+    setPlaylist(transformedTracks)
+    setPlaylistState(transformedTracks)
+    setCurrentTrackIndex(startIndex)
+    playTrack(transformedTracks[startIndex])
   }
 
   return (
@@ -78,6 +62,7 @@ export function NewReleases({ data }: NewReleasesProps) {
               <CardContent className="p-3">
                 <div className="group relative mb-2 aspect-square overflow-hidden rounded-md">
                   <Image
+                  loader={customLoader}
                     src={release.artworkPath || "/placeholder.svg"}
                     alt={release.title}
                     width={280}
@@ -89,12 +74,7 @@ export function NewReleases({ data }: NewReleasesProps) {
                       size="icon"
                       variant="secondary"
                       className="h-10 w-10 rounded-full"
-                      onClick={() => handlePlayRelease(release.Tracks.map(track => ({ 
-                        ...track, 
-                        id: track.id.toString(), 
-                        genreID: track.genreID.toString(), 
-                        explicit: false 
-                      })), 0)} // Play the first track of the release
+                      onClick={() => handlePlayRelease(release.Tracks, 0)}
                     >
                       <Play className="h-4 w-4 fill-current" />
                     </Button>

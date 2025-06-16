@@ -1,3 +1,5 @@
+"use client"
+
 import Image from "next/image"
 import Link from "next/link"
 import { formatDuration } from "@/lib/utils"
@@ -5,28 +7,32 @@ import { Play, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useAudio } from "@/contexts/AudioContext"
+import { Track } from "@/lib/actions"
 
 interface RecommendedTracksProps {
   data: {
     heading: string
-    Tracks: Array<{
-      id: string
-      title: string
-      artist: string
-      artistID: string
-      album: string
-      artworkPath: string
-      genre: string
-      genreID: string
-      duration: string
-      path: string
-      totalplays: number
-      albumID: string
-    }>
+    type: "trend" | "recommended"
+    Tracks: Track[]
   }
 }
 
 export function RecommendedTracks({ data }: RecommendedTracksProps) {
+  const { playTrack } = useAudio()
+
+  const handlePlayTrack = (track: Track) => {
+    playTrack({
+      ...track,
+      id: track.id.toString(),
+      genreID: track.genreID?.toString() || "",
+      explicit: false,
+      lyrics: null,
+      artworkPath: track.artworkPath || "",
+      albumID: track.albumID || ""
+    })
+  }
+
   return (
     <div className="mb-8">
       <div className="mb-4 flex items-center justify-between">
@@ -44,9 +50,13 @@ export function RecommendedTracks({ data }: RecommendedTracksProps) {
             {data.Tracks.map((track) => (
               <div key={track.id} className="group flex items-center gap-3 rounded-md p-2 hover:bg-muted">
                 <div className="flex w-8 items-center justify-center">
-                  <Play className="hidden h-4 w-4 fill-current group-hover:block" />
-                  <Button variant="ghost" size="icon" className="h-8 w-8 group-hover:hidden">
-                    <Play className="h-4 w-4" />
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 group-hover:bg-primary/10"
+                    onClick={() => handlePlayTrack(track)}
+                  >
+                    <Play className="h-4 w-4 fill-current" />
                     <span className="sr-only">Play</span>
                   </Button>
                 </div>
@@ -54,7 +64,8 @@ export function RecommendedTracks({ data }: RecommendedTracksProps) {
                   <Image
                     src={track.artworkPath || "/placeholder.svg"}
                     alt={track.title}
-                    fill
+                    width={40}
+                    height={40}
                     className="object-cover"
                   />
                 </div>
@@ -77,7 +88,7 @@ export function RecommendedTracks({ data }: RecommendedTracksProps) {
                       <span className="sr-only">More options</span>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className="w-48">
                     <DropdownMenuItem>Add to playlist</DropdownMenuItem>
                     <DropdownMenuItem>Add to queue</DropdownMenuItem>
                     <DropdownMenuItem>Go to artist</DropdownMenuItem>

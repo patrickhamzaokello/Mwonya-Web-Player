@@ -7,7 +7,23 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    domains: ['assets.mwonya.com','artist.mwonya.com','mwonya-kasfa-assets-store.s3.us-east-1.amazonaws.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'assets.mwonya.com',
+        pathname: '/*',
+      },
+      {
+        protocol: 'https',
+        hostname: 'artist.mwonya.com',
+        pathname: '/*',
+      },
+      {
+        protocol: 'https',
+        hostname: 'mwonya-kasfa-assets-store.s3.us-east-1.amazonaws.com',
+        pathname: '/*',
+      },
+    ],
   },
 };
 

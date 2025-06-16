@@ -5,6 +5,15 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+export const customLoader = ({ src }: { src: string }) => {
+  try {
+    new URL(src);
+    return src;
+  } catch {
+    return "/placeholder.svg";
+  }
+};
+
 export function formatTime(seconds: number): string {
     if (isNaN(seconds)) return "0:00"
   

@@ -2,16 +2,9 @@
 
 import { createContext, useContext, useState, useRef, ReactNode, useEffect } from 'react';
 import { Howl, Howler } from 'howler';
+import { Track } from '@/lib/actions';
 
-interface Track {
-  id: string;
-  title: string;
-  artist: string;
-  path: string;
-  album?: string;
-  duration: string;
-  artworkPath?: string;
-}
+
 
 interface AudioContextType {
   isPlaying: boolean;

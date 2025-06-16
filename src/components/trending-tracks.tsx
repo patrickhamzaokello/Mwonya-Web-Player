@@ -1,3 +1,5 @@
+"use client"
+
 import Image from "next/image"
 import Link from "next/link"
 import { formatDuration } from "@/lib/utils"
@@ -5,30 +7,34 @@ import { Play, MoreHorizontal, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useAudio } from "@/contexts/AudioContext"
+import { Track } from "@/lib/actions"
+import { customLoader } from "@/lib/utils"
 
 interface TrendingTracksProps {
   data: {
     heading: string
-    Tracks: Array<{
-      id: string
-      title: string
-      artist: string
-      artistID: string
-      album: string
-      artworkPath: string
-      genre: string
-      genreID: string
-      duration: string
-      path: string
-      totalplays: number
-      albumID: string
-    }>
+    type: "trend"
+    Tracks: Track[]
   }
 }
 
 export function TrendingTracks({ data }: TrendingTracksProps) {
+  const { playTrack } = useAudio()
   // Apple Music typically shows 5-8 items in a horizontal scroll
   const displayTracks = data.Tracks.slice(0, 8)
+
+  const handlePlayTrack = (track: Track) => {
+    playTrack({
+      ...track,
+      id: track.id.toString(),
+      genreID: track.genreID?.toString() || "",
+      explicit: false,
+      lyrics: null,
+      artworkPath: track.artworkPath || "",
+      albumID: track.albumID || ""
+    })
+  }
 
   return (
     <div className="mb-10">
@@ -58,14 +64,17 @@ export function TrendingTracks({ data }: TrendingTracksProps) {
                   <Image
                     src={track.artworkPath || "/placeholder.svg"}
                     alt={track.title}
-                    fill
+                    width={160}
+                    height={160}
                     className="object-cover"
+                    loader={customLoader}
                   />
                   <div className="absolute inset-0 bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <Button 
                       size="icon" 
                       variant="secondary" 
                       className="rounded-full h-11 w-11 bg-white/30 backdrop-blur-md border-0 hover:bg-white/40 shadow-lg"
+                      onClick={() => handlePlayTrack(track)}
                     >
                       <Play className="h-5 w-5 fill-white text-white" />
                     </Button>
@@ -125,7 +134,8 @@ export function TrendingTracks({ data }: TrendingTracksProps) {
                 <Image
                   src={track.artworkPath || "/placeholder.svg"}
                   alt={track.title}
-                  fill
+                  width={40}
+                  height={40}
                   className="object-cover"
                 />
               </div>
@@ -142,6 +152,7 @@ export function TrendingTracks({ data }: TrendingTracksProps) {
                 variant="ghost" 
                 size="icon" 
                 className="h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => handlePlayTrack(track)}
               >
                 <Play className="h-4 w-4" />
               </Button>
