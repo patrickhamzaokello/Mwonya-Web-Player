@@ -69,7 +69,7 @@ const data = {
     },
     {
       title: "Music",
-      url: "music",
+      url: "/music",
       icon: Sparkles,
       isActive: true,
     },

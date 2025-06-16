@@ -44,7 +44,7 @@ export function NavFavorites({
         {mlibrary.map((item) => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton asChild>
-              <a href={item.url} title={item.name}>
+              <a href={item.url} >
               <item.icon />
                 <span>{item.name}</span>
               </a>
