@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, KeyboardEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -19,10 +19,17 @@ import { useRouter } from 'next/navigation';
 export function TopBar() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleLogout = async () => {
     await logout();
     router.push('/login');
+  };
+
+  const handleSearch = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
   };
 
   return (
@@ -44,6 +51,9 @@ export function TopBar() {
           <Input
             placeholder="Search for songs, artists, albums..."
             className="pl-10 bg-muted/50 border-0 focus-visible:ring-1"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleSearch}
           />
         </div>
       </div>
