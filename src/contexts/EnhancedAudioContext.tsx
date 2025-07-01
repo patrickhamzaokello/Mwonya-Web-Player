@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useReducer, useRef, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import Hls from 'hls.js';
 import { Track, AudioState, PlaybackAnalytics, UserInteraction, AudioActions } from '@/types/audio';
 
 interface AudioContextType extends AudioState, AudioActions {}
@@ -98,18 +99,25 @@ interface AudioProviderProps {
 export function AudioProvider({ children }: AudioProviderProps) {
   const [state, dispatch] = useReducer(audioReducer, initialState);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const hlsRef = useRef<Hls | null>(null);
   const playbackStartTime = useRef<Date | null>(null);
   const playbackAnalytics = useRef<PlaybackAnalytics[]>([]);
   const userInteractions = useRef<UserInteraction[]>([]);
   const hasReportedPlay = useRef<boolean>(false);
   const seekCount = useRef<number>(0);
 
-  // Initialize audio element
+  // Initialize audio element and HLS
   useEffect(() => {
-    audioRef.current = new Audio();
-    audioRef.current.preload = 'metadata';
+    const audio = new Audio();
+    audioRef.current = audio;
     
-    const audio = audioRef.current;
+    // Check if HLS is supported
+    const hls = new Hls({
+      enableWorker: true,
+      lowLatencyMode: true,
+      backBufferLength: 30,
+    });
+    hlsRef.current = hls;
 
     const handleLoadStart = () => dispatch({ type: 'SET_LOADING', payload: true });
     const handleCanPlay = () => dispatch({ type: 'SET_LOADING', payload: false });
@@ -156,7 +164,6 @@ export function AudioProvider({ children }: AudioProviderProps) {
       dispatch({ type: 'SET_LOADING', payload: false });
     };
 
-    audio.addEventListener('loadstart', handleLoadStart);
     audio.addEventListener('canplay', handleCanPlay);
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('play', handlePlay);
@@ -165,8 +172,37 @@ export function AudioProvider({ children }: AudioProviderProps) {
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('error', handleError);
 
+    // HLS event listeners
+    hls.on(Hls.Events.MEDIA_ATTACHED, () => {
+      console.log('HLS media attached');
+    });
+
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      console.log('HLS manifest parsed');
+      dispatch({ type: 'SET_LOADING', payload: false });
+    });
+
+    hls.on(Hls.Events.ERROR, (event, data) => {
+      console.error('HLS error:', data);
+      if (data.fatal) {
+        switch (data.type) {
+          case Hls.ErrorTypes.NETWORK_ERROR:
+            hls.startLoad();
+            break;
+          case Hls.ErrorTypes.MEDIA_ERROR:
+            hls.recoverMediaError();
+            break;
+          default:
+            dispatch({ type: 'SET_ERROR', payload: 'Failed to load HLS stream' });
+            break;
+        }
+      }
+    });
+
+    // Attach HLS to audio element
+    hls.attachMedia(audio);
+
     return () => {
-      audio.removeEventListener('loadstart', handleLoadStart);
       audio.removeEventListener('canplay', handleCanPlay);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('play', handlePlay);
@@ -174,6 +210,11 @@ export function AudioProvider({ children }: AudioProviderProps) {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
+      
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
     };
   }, []);
 
@@ -192,17 +233,14 @@ export function AudioProvider({ children }: AudioProviderProps) {
       completed: duration >= 30 || completed,
       skipped: !completed && duration < 30,
       seekCount: seekCount.current,
-      source: 'playlist', // This should be dynamic based on context
+      source: 'playlist',
     };
     
     playbackAnalytics.current.push(analytics);
-    
-    // Send analytics to server (implement your API call here)
     console.log('Analytics recorded:', analytics);
   }, [state.currentTrack]);
 
   const recordPlay = useCallback((track: Track) => {
-    // This would typically send to your analytics API
     console.log('Play recorded for track:', track.title);
   }, []);
 
@@ -215,26 +253,50 @@ export function AudioProvider({ children }: AudioProviderProps) {
     };
     
     userInteractions.current.push(interaction);
-    
-    // Send to server (implement your API call here)
     console.log('User interaction recorded:', interaction);
+  }, []);
+
+  // Load HLS stream
+  const loadHlsStream = useCallback((url: string) => {
+    if (!hlsRef.current || !audioRef.current) return;
+
+    dispatch({ type: 'SET_LOADING', payload: true });
+    
+    if (Hls.isSupported()) {
+      hlsRef.current.loadSource(url);
+      hlsRef.current.on(Hls.Events.MANIFEST_PARSED, () => {
+        audioRef.current?.play().catch(e => {
+          dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' });
+        });
+      });
+    } else if (audioRef.current.canPlayType('application/vnd.apple.mpegurl')) {
+      // Fallback for Safari
+      audioRef.current.src = url;
+      audioRef.current.addEventListener('loadedmetadata', () => {
+        audioRef.current?.play().catch(e => {
+          dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' });
+        });
+      });
+    } else {
+      dispatch({ type: 'SET_ERROR', payload: 'HLS is not supported in this browser' });
+    }
   }, []);
 
   // Playback controls
   const play = useCallback(async (track?: Track) => {
-    if (!audioRef.current) return;
+    if (!audioRef.current || !hlsRef.current) return;
     
     try {
       if (track && track.id !== state.currentTrack?.id) {
-        audioRef.current.src = track.url;
+        loadHlsStream(track.url);
         dispatch({ type: 'SET_CURRENT_TRACK', payload: track });
+      } else if (audioRef.current.paused) {
+        await audioRef.current.play();
       }
-      
-      await audioRef.current.play();
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' });
     }
-  }, [state.currentTrack]);
+  }, [state.currentTrack, loadHlsStream]);
 
   const pause = useCallback(() => {
     if (audioRef.current) {

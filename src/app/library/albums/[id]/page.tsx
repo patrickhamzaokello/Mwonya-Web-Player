@@ -131,6 +131,7 @@ export default function Component() {
     }
   };
   const handlePlayTrack = (track: any, index: number) => {
+    console.log(track)
     if ((data?.tracks ?? []).length > 0) {
       // Set the album tracks as queue starting from the selected track
       if (data && data.tracks) {
