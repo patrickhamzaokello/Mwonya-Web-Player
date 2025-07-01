@@ -3,10 +3,11 @@
 import { useSearchParams, useRouter } from "next/navigation"
 import { useEffect, useState, useTransition } from "react"
 import Image from "next/image"
-import { Search, Play, Clock, Users, Music, Disc, User, Loader2 } from "lucide-react"
+import { Search, Play, Clock, Users, Music, Disc, User, Loader2, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Card, CardContent } from "@/components/ui/card"
 import { searchMusic } from "@/actions/search-actions"
 
 function formatDuration(duration: string) {
@@ -82,17 +83,17 @@ function getTypeIcon(type: string) {
 function getTypeColor(type: string) {
   switch (type) {
     case "song":
-      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+      return "bg-blue-500 text-white"
     case "album":
-      return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300"
+      return "bg-purple-500 text-white"
     case "artist":
-      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+      return "bg-green-500 text-white"
     default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+      return "bg-gray-500 text-white"
   }
 }
 
-function UnifiedResult({ result, rank }: { result: SearchResult; rank: number }) {
+function TopResult({ result }: { result: SearchResult }) {
   const router = useRouter()
 
   const handleClick = () => {
@@ -104,95 +105,185 @@ function UnifiedResult({ result, rank }: { result: SearchResult; rank: number })
   const isClickable = result.type === "album"
 
   return (
-    <div
-      className={`flex items-center gap-4 p-4 rounded-lg transition-colors ${
-        isClickable ? "hover:bg-muted/50 cursor-pointer" : "hover:bg-muted/30"
-      } group`}
+    <Card
+      className={`p-6 ${isClickable ? "cursor-pointer hover:shadow-lg" : ""} transition-all duration-200`}
       onClick={handleClick}
     >
-      {/* Rank Number */}
-      <div className="flex-shrink-0 w-8 text-center">
-        <span className="text-sm font-medium text-muted-foreground">{rank}</span>
-      </div>
-
-      {/* Artwork */}
-      <div className="relative flex-shrink-0">
-        <Image
-          src={result.artworkPath || "/placeholder.svg?height=56&width=56"}
-          alt={result.title || result.artist}
-          width={56}
-          height={56}
-          className={`object-cover ${result.type === "artist" ? "rounded-full" : "rounded-md"}`}
-        />
-        {result.type === "song" && (
-          <Button
-            size="icon"
-            variant="secondary"
-            className="absolute inset-0 m-auto w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e) => {
-              e.stopPropagation()
-              // Handle play functionality here
-            }}
-          >
-            <Play className="w-4 h-4" />
-          </Button>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <h3 className="font-medium truncate">{result.title || result.artist}</h3>
-          <Badge variant="secondary" className={`text-xs flex items-center gap-1 ${getTypeColor(result.type)}`}>
-            {getTypeIcon(result.type)}
-            {result.type.charAt(0).toUpperCase() + result.type.slice(1)}
-          </Badge>
+      <CardContent className="p-0">
+        <div className="flex items-center gap-2 mb-4">
+          <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+          <h2 className="text-lg font-semibold">Top Result</h2>
         </div>
 
-        <p className="text-sm text-muted-foreground truncate">{result.type === "artist" ? "Artist" : result.artist}</p>
-
-        {/* Additional info based on type */}
-        {result.type === "song" && result.album_name && (
-          <p className="text-xs text-muted-foreground truncate">{result.album_name}</p>
-        )}
-      </div>
-
-      {/* Metadata */}
-      <div className="flex items-center gap-4 text-sm text-muted-foreground flex-shrink-0">
-        {/* Genre for songs and albums */}
-        {result.genre_name && (result.type === "song" || result.type === "album") && (
-          <Badge variant="outline" className="text-xs">
-            {result.genre_name}
-          </Badge>
-        )}
-
-        {/* Duration for songs */}
-        {result.type === "song" && result.track_duration && (
-          <div className="flex items-center gap-1">
-            <Clock className="w-3 h-3" />
-            {formatDuration(result.track_duration)}
+        <div className="flex items-center gap-6">
+          {/* Large Artwork */}
+          <div className="relative group">
+            <Image
+              src={result.artworkPath || "/placeholder.svg?height=120&width=120"}
+              alt={result.title || result.artist}
+              width={120}
+              height={120}
+              className={`object-cover shadow-lg ${result.type === "artist" ? "rounded-full" : "rounded-xl"}`}
+            />
+            {result.type === "song" && (
+              <Button
+                size="icon"
+                className="absolute inset-0 m-auto w-12 h-12 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white text-black"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  // Handle play functionality here
+                }}
+              >
+                <Play className="w-6 h-6" />
+              </Button>
+            )}
           </div>
-        )}
 
-        {/* Play count for songs */}
-        {result.type === "song" && result.plays && (
-          <div className="flex items-center gap-1">
-            <Users className="w-3 h-3" />
-            {formatPlays(result.plays)}
+          {/* Content */}
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <Badge className={`${getTypeColor(result.type)} px-3 py-1`}>
+                {getTypeIcon(result.type)}
+                <span className="ml-1 font-medium">{result.type.charAt(0).toUpperCase() + result.type.slice(1)}</span>
+              </Badge>
+              {result.verified && (
+                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                  Verified
+                </Badge>
+              )}
+            </div>
+
+            <h3 className="text-2xl font-bold mb-1 text-foreground">{result.title || result.artist}</h3>
+
+            <p className="text-lg text-muted-foreground mb-3">{result.type === "artist" ? "Artist" : result.artist}</p>
+
+            {/* Additional Info */}
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              {result.album_name && result.type === "song" && <span className="font-medium">{result.album_name}</span>}
+
+              {result.genre_name && (
+                <Badge variant="outline" className="text-xs">
+                  {result.genre_name}
+                </Badge>
+              )}
+
+              {result.type === "song" && result.track_duration && (
+                <div className="flex items-center gap-1">
+                  <Clock className="w-4 h-4" />
+                  {formatDuration(result.track_duration)}
+                </div>
+              )}
+
+              {result.type === "song" && result.plays && (
+                <div className="flex items-center gap-1">
+                  <Users className="w-4 h-4" />
+                  {formatPlays(result.plays)} plays
+                </div>
+              )}
+            </div>
           </div>
-        )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
 
-        {/* Verified badge */}
-        {result.verified && (
-          <Badge variant="secondary" className="text-xs">
-            Verified
-          </Badge>
-        )}
+function SearchResultItem({ result, rank }: { result: SearchResult; rank: number }) {
+  const router = useRouter()
 
-        {/* Relevance score (for debugging - can be removed) */}
-        <div className="text-xs text-muted-foreground/50">{result.relevance_score.toFixed(1)}</div>
-      </div>
-    </div>
+  const handleClick = () => {
+    if (result.type === "album") {
+      router.push(`/library/albums/${result.id}`)
+    }
+  }
+
+  const isClickable = result.type === "album"
+
+  return (
+    <Card
+      className={`p-4 ${isClickable ? "cursor-pointer hover:shadow-md" : "hover:bg-muted/30"} transition-all duration-200`}
+      onClick={handleClick}
+    >
+      <CardContent className="p-0">
+        <div className="flex items-center gap-4">
+          {/* Rank */}
+          <div className="flex-shrink-0 w-8 text-center">
+            <span className="text-lg font-semibold text-muted-foreground">{rank}</span>
+          </div>
+
+          {/* Artwork */}
+          <div className="relative group flex-shrink-0">
+            <Image
+              src={result.artworkPath || "/placeholder.svg?height=80&width=80"}
+              alt={result.title || result.artist}
+              width={80}
+              height={80}
+              className={`object-cover shadow-md ${result.type === "artist" ? "rounded-full" : "rounded-lg"}`}
+            />
+            {result.type === "song" && (
+              <Button
+                size="icon"
+                className="absolute inset-0 m-auto w-10 h-10 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white text-black"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  // Handle play functionality here
+                }}
+              >
+                <Play className="w-5 h-5" />
+              </Button>
+            )}
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-2">
+              <Badge className={`${getTypeColor(result.type)} text-xs px-2 py-1`}>
+                {getTypeIcon(result.type)}
+                <span className="ml-1">{result.type.charAt(0).toUpperCase() + result.type.slice(1)}</span>
+              </Badge>
+              {result.verified && (
+                <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800">
+                  Verified
+                </Badge>
+              )}
+            </div>
+
+            <h3 className="text-lg font-semibold mb-1 truncate text-foreground">{result.title || result.artist}</h3>
+
+            <p className="text-sm text-muted-foreground mb-2 truncate">
+              {result.type === "artist" ? "Artist" : result.artist}
+            </p>
+
+            {result.type === "song" && result.album_name && (
+              <p className="text-xs text-muted-foreground truncate mb-2">{result.album_name}</p>
+            )}
+
+            {/* Metadata */}
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              {result.genre_name && (
+                <Badge variant="outline" className="text-xs">
+                  {result.genre_name}
+                </Badge>
+              )}
+
+              {result.type === "song" && result.track_duration && (
+                <div className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {formatDuration(result.track_duration)}
+                </div>
+              )}
+
+              {result.type === "song" && result.plays && (
+                <div className="flex items-center gap-1">
+                  <Users className="w-3 h-3" />
+                  {formatPlays(result.plays)}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -235,83 +326,102 @@ export default function SearchPage() {
     ? [...searchData.search_results].sort((a, b) => b.relevance_score - a.relevance_score)
     : []
 
+  const topResult = sortedResults[0]
+  const otherResults = sortedResults.slice(1)
+
   const loading = isLoading || isPending
 
   return (
-    <div className="p-6">
-      <div className="max-w-4xl mx-auto">
+    <div className="p-6 bg-background min-h-screen">
+      <div className="max-w-5xl mx-auto">
         {/* Search Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold mb-2">Search Results</h1>
+          <h1 className="text-3xl font-bold mb-3">Search Results</h1>
           {query && (
-            <div className="space-y-2">
-              <p className="text-muted-foreground">
-                Showing results for: <span className="font-semibold text-foreground">"{query}"</span>
+            <div className="space-y-3">
+              <p className="text-lg text-muted-foreground">
+                Results for <span className="font-semibold text-foreground">"{query}"</span>
               </p>
               {searchData && (
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span>{searchData.total_results} total results</span>
+                <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                  <span className="font-medium">{searchData.total_results} results found</span>
                   <span>
                     Page {searchData.page} of {searchData.total_pages}
                   </span>
-                  <span className="text-xs">Sorted by relevance</span>
                 </div>
               )}
-              {searchData?.suggested_words && <p className="text-sm text-blue-600">{searchData.suggested_words}</p>}
+              {searchData?.suggested_words && (
+                <p className="text-sm text-blue-600 font-medium">{searchData.suggested_words}</p>
+              )}
             </div>
           )}
         </div>
 
         {/* Loading State */}
         {loading && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-            <span className="ml-2 text-muted-foreground">Searching...</span>
+          <div className="flex flex-col items-center justify-center py-16">
+            <Loader2 className="w-12 h-12 animate-spin text-muted-foreground mb-4" />
+            <span className="text-lg text-muted-foreground">Searching...</span>
           </div>
         )}
 
         {/* Error State */}
         {error && !loading && (
-          <Alert className="mb-6">
-            <AlertDescription>{error}</AlertDescription>
+          <Alert className="mb-8">
+            <AlertDescription className="text-base">{error}</AlertDescription>
           </Alert>
         )}
 
         {/* Search Results */}
         {query && searchData && !loading && !error ? (
-          <div className="space-y-2">
+          <div className="space-y-8">
             {sortedResults.length > 0 ? (
               <>
-                {/* Results Header */}
-                <div className="flex items-center justify-between mb-4 pb-2 border-b">
-                  <h2 className="text-lg font-semibold">All Results ({sortedResults.length})</h2>
-                  <div className="text-sm text-muted-foreground">Ranked by relevance</div>
-                </div>
+                {/* Top Result */}
+                {topResult && (
+                  <div className="mb-8">
+                    <TopResult result={topResult} />
+                  </div>
+                )}
 
-                {/* Results List */}
-                {sortedResults.map((result, index) => (
-                  <UnifiedResult key={result.id} result={result} rank={index + 1} />
-                ))}
+                {/* Other Results */}
+                {otherResults.length > 0 && (
+                  <div>
+                    <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
+                      <Music className="w-5 h-5" />
+                      All Results ({otherResults.length})
+                    </h2>
+                    <div className="space-y-3">
+                      {otherResults.map((result, index) => (
+                        <SearchResultItem key={result.id} result={result} rank={index + 2} />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
-              <div className="text-center py-12">
-                <Search className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">No results found</h3>
-                <p className="text-muted-foreground">Try searching with different keywords or check your spelling</p>
+              <div className="text-center py-16">
+                <Search className="mx-auto h-16 w-16 text-muted-foreground mb-6" />
+                <h3 className="text-xl font-medium mb-3">No results found</h3>
+                <p className="text-muted-foreground text-lg">
+                  Try searching with different keywords or check your spelling
+                </p>
               </div>
             )}
           </div>
         ) : query && !loading && !error && !searchData ? (
-          <div className="text-center py-12">
-            <Search className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">No results found</h3>
-            <p className="text-muted-foreground">Try searching with different keywords or check your spelling</p>
+          <div className="text-center py-16">
+            <Search className="mx-auto h-16 w-16 text-muted-foreground mb-6" />
+            <h3 className="text-xl font-medium mb-3">No results found</h3>
+            <p className="text-muted-foreground text-lg">
+              Try searching with different keywords or check your spelling
+            </p>
           </div>
         ) : !query && !loading ? (
-          <div className="text-center py-12">
-            <Search className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">Search for music</h3>
-            <p className="text-muted-foreground">Enter a song, artist, or album in the search box above</p>
+          <div className="text-center py-16">
+            <Search className="mx-auto h-16 w-16 text-muted-foreground mb-6" />
+            <h3 className="text-xl font-medium mb-3">Search for music</h3>
+            <p className="text-muted-foreground text-lg">Enter a song, artist, or album in the search box above</p>
           </div>
         ) : null}
       </div>
