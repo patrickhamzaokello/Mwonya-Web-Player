@@ -191,13 +191,23 @@ export async function getAlbumData(albumId: string, page: number = 1): Promise<A
         datecreated: album.datecreated || 'Unknown Date',
       }))
 
-    // Build and return the final album data
+    // Validate that we have essential album data
+    if (!albumInfo.id || !albumInfo.title || !albumInfo.artistName) {
+      console.error("Essential album data missing:", { 
+        id: albumInfo.id, 
+        title: albumInfo.title, 
+        artistName: albumInfo.artistName 
+      });
+      return null;
+    }
+
+    // Build and return the final album data  
     const albumData: AlbumData = {
-      id: albumInfo.id || 'unknown-id',
-      title: albumInfo.title || 'Unknown Title',
-      artistName: albumInfo.artistName || 'Unknown Artist',
+      id: albumInfo.id,
+      title: albumInfo.title,
+      artistName: albumInfo.artistName,
       genreName: albumInfo.genreName || 'Unknown Genre',
-      artworkPath: albumInfo.artworkPath || '/placeholder.svg',
+      artworkPath: albumInfo.artworkPath || '/placeholder.svg', 
       description: albumInfo.description || 'No description available',
       datecreated: albumInfo.datecreated || 'Unknown Date',
       tracks,

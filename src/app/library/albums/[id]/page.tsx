@@ -2,24 +2,36 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Heart, MoreHorizontal, Play, Share, RefreshCw, AlertCircle } from "lucide-react";
+import {
+  Heart,
+  MoreHorizontal,
+  Play,
+  Share,
+  RefreshCw,
+  AlertCircle,
+} from "lucide-react";
 import Image from "next/image";
-import { getAlbumData, getAlbumDataWithRetry, type AlbumData } from "@/actions/get-album-data";
+import {
+  getAlbumData,
+  getAlbumDataWithRetry,
+  type AlbumData,
+} from "@/actions/get-album-data";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 
 // Utility function to validate URLs
 const isValidUrl = (string: string): boolean => {
-  if (!string || string.trim() === '' || string === '/placeholder.svg') {
+  if (!string || string.trim() === "" || string === "/placeholder.svg") {
     return false;
   }
-  
+
   try {
     new URL(string);
     return true;
   } catch {
     // If it's a relative path starting with /, it's valid
-    return string.startsWith('/');
+    return string.startsWith("/");
   }
 };
 
@@ -38,53 +50,56 @@ export default function Component() {
   const [loadingState, setLoadingState] = useState<LoadingState>({
     isLoading: true,
     isRefreshing: false,
-    error: null
+    error: null,
   });
 
-  const fetchAlbumData = useCallback(async (isRefresh = false) => {
-    if (typeof albumId !== "string" || !albumId.trim()) {
-      setLoadingState({
-        isLoading: false,
-        isRefreshing: false,
-        error: "Invalid album ID"
-      });
-      return;
-    }
-
-    setLoadingState(prev => ({
-      ...prev,
-      isLoading: !isRefresh,
-      isRefreshing: isRefresh,
-      error: null
-    }));
-
-    try {
-      // Use retry mechanism for better reliability
-      const albumData = await getAlbumDataWithRetry(albumId, 1, 3);
-      
-      if (albumData) {
-        setData(albumData);
+  const fetchAlbumData = useCallback(
+    async (isRefresh = false) => {
+      if (typeof albumId !== "string" || !albumId.trim()) {
         setLoadingState({
           isLoading: false,
           isRefreshing: false,
-          error: null
+          error: "Invalid album ID",
         });
-      } else {
+        return;
+      }
+
+      setLoadingState((prev) => ({
+        ...prev,
+        isLoading: !isRefresh,
+        isRefreshing: isRefresh,
+        error: null,
+      }));
+
+      try {
+        // Use retry mechanism for better reliability
+        const albumData = await getAlbumDataWithRetry(albumId, 1, 3);
+
+        if (albumData) {
+          setData(albumData);
+          setLoadingState({
+            isLoading: false,
+            isRefreshing: false,
+            error: null,
+          });
+        } else {
+          setLoadingState({
+            isLoading: false,
+            isRefreshing: false,
+            error: "Album not found or temporarily unavailable",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching album data:", error);
         setLoadingState({
           isLoading: false,
           isRefreshing: false,
-          error: "Album not found or temporarily unavailable"
+          error: "Failed to load album data. Please try again.",
         });
       }
-    } catch (error) {
-      console.error("Error fetching album data:", error);
-      setLoadingState({
-        isLoading: false,
-        isRefreshing: false,
-        error: "Failed to load album data. Please try again."
-      });
-    }
-  }, [albumId]);
+    },
+    [albumId]
+  );
 
   useEffect(() => {
     fetchAlbumData();
@@ -168,7 +183,7 @@ export default function Component() {
         <h2 className="text-2xl font-bold mb-2">Oops! Something went wrong</h2>
         <p className="text-gray-400 mb-6">{loadingState.error}</p>
         <div className="flex gap-3 justify-center">
-          <Button 
+          <Button
             onClick={handleRefresh}
             disabled={loadingState.isRefreshing}
             className="bg-purple-600 hover:bg-purple-700"
@@ -185,8 +200,8 @@ export default function Component() {
               </>
             )}
           </Button>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => router.back()}
             className="border-gray-600 text-white hover:bg-gray-800"
           >
@@ -212,9 +227,16 @@ export default function Component() {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-2">Album not found</h2>
-          <p className="text-gray-400 mb-4">The album you're looking for doesn't exist.</p>
-          <Button onClick={() => router.back()} variant="outline" className="border-gray-600 text-white hover:bg-gray-800">
+          <p className="text-gray-400 mb-4">
+            The album you're looking for doesn't exist or is unavailable.
+          </p>
+          <Button
+            onClick={() => router.back()}
+            variant="outline"
+            className="border-gray-600 text-white hover:bg-gray-800"
+          >
             Go Back
           </Button>
         </div>
@@ -238,7 +260,8 @@ export default function Component() {
           <div>
             <h1 className="text-white font-semibold mb-2">Details</h1>
             <p className="text-gray-400 text-sm">
-              {data.title} • {data.artistName} • {data.genreName} • {data.datecreated}
+              {data.title} • {data.artistName} • {data.genreName} •{" "}
+              {data.datecreated}
             </p>
           </div>
           <Button
@@ -248,7 +271,11 @@ export default function Component() {
             disabled={loadingState.isRefreshing}
             className="text-gray-400 hover:text-white"
           >
-            <RefreshCw className={`w-4 h-4 ${loadingState.isRefreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`w-4 h-4 ${
+                loadingState.isRefreshing ? "animate-spin" : ""
+              }`}
+            />
           </Button>
         </div>
 
@@ -258,7 +285,11 @@ export default function Component() {
           <div className="lg:col-span-1">
             <div className="aspect-square bg-gray-700 rounded-lg mb-4 overflow-hidden relative">
               <Image
-                src={isValidUrl(data.artworkPath) ? data.artworkPath : "/placeholder.svg"}
+                src={
+                  isValidUrl(data.artworkPath)
+                    ? data.artworkPath
+                    : "/placeholder.svg"
+                }
                 alt={`${data.title} album cover`}
                 width={300}
                 height={300}
@@ -272,11 +303,14 @@ export default function Component() {
               />
             </div>
             <div className="flex gap-3 w-full">
-              <Button className="bg-purple-600 hover:bg-purple-700 text-white flex-1">
+              <Button className="bg-[#5E00E2] hover:bg-purple-700 text-white flex-1">
                 <Play className="w-4 h-4 mr-2" />
                 Play
               </Button>
-              <Button variant="outline" className="border-gray-600 text-white hover:bg-gray-800 bg-transparent flex-1">
+              <Button
+                variant="outline"
+                className="border-gray-600 text-white hover:bg-gray-800 bg-transparent flex-1"
+              >
                 <Share className="w-4 h-4 mr-2" />
                 Share
               </Button>
@@ -286,51 +320,90 @@ export default function Component() {
           {/* Album Info and Tracklist */}
           <div className="lg:col-span-2">
             <div className="mb-6">
-              <h2 className="text-4xl font-bold text-purple-400 mb-2">{data.title}</h2>
+              <h2 className="text-4xl font-bold text-[#5E00E2] mb-2">
+                {data.title}
+              </h2>
               <p className="text-gray-300">
-                <span className="font-medium">{data.artistName}</span> • {data.genreName} • {data.datecreated}
+                <span className="font-medium">{data.artistName}</span> •{" "}
+                {data.genreName} • {data.datecreated}
               </p>
-              {data.description && data.description !== "No description available" && (
-                <p className="text-gray-400 text-sm mt-2">{data.description}</p>
-              )}
+              {data.description &&
+                data.description !== "No description available" && (
+                  <p className="text-gray-400 text-sm mt-2">
+                    {data.description}
+                  </p>
+                )}
             </div>
 
-            {/* Tracklist */}
-            {data.tracks && data.tracks.length > 0 ? (
-              <div className="space-y-1">
-                <h3 className="text-lg font-semibold mb-3">Tracks ({data.tracks.length})</h3>
-                {data.tracks.map((track, index) => (
-                  <div
-                    key={track.id}
-                    className={`flex items-center gap-4 p-3 rounded-lg hover:bg-gray-800/50 transition-colors cursor-pointer ${
-                      index === 0 ? "bg-purple-900/30" : ""
-                    }`}
-                  >
-                    <span className="text-gray-400 w-4 text-sm">{index + 1}</span>
-                    <Button variant="ghost" size="sm" className="p-0 h-auto text-gray-400 hover:text-white">
-                      <Heart className="w-4 h-4" />
-                    </Button>
-                    <div className="flex-1 min-w-0">
-                      <p className={`font-medium truncate ${index === 0 ? "text-purple-400" : "text-white"}`}>
-                        {track.title}
-                      </p>
-                      <p className="text-gray-400 text-sm truncate">{track.artist}</p>
-                      {track.totalplays > 0 && (
-                        <p className="text-gray-500 text-xs">{track.totalplays.toLocaleString()} plays</p>
-                      )}
-                    </div>
-                    <Button variant="ghost" size="sm" className="p-0 h-auto text-gray-400 hover:text-white">
-                      <MoreHorizontal className="w-4 h-4" />
-                    </Button>
-                    <span className="text-gray-400 text-sm w-12 text-right">{track.duration}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-gray-400">No tracks available for this album</p>
-              </div>
-            )}
+           {/* Tracklist */}
+{data.tracks && data.tracks.length > 0 ? (
+  <div className="space-y-1">
+    <h3 className="text-lg font-semibold mb-4">
+      Tracks ({data.tracks.length})
+    </h3>
+    {data.tracks.map((track, index) => (
+      <div
+        key={track.id}
+        className={`group flex items-center gap-3 p-2 rounded-md hover:bg-gray-800/50 transition-all duration-200 cursor-pointer ${
+            index !== data.tracks.length - 1 ? "border-b border-gray" : ""
+          }`}
+      >
+        {/* Track number / Play button */}
+        <div className="w-5 flex items-center justify-center">
+          <span className="text-gray-400 text-sm group-hover:hidden">
+            {index + 1}
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="hidden group-hover:flex p-0 h-auto text-gray-400 hover:text-white"
+          >
+            <Play className="w-4 h-4 fill-current" />
+          </Button>
+        </div>
+
+        {/* Track info */}
+        <div className="flex-1 min-w-0">
+          <p className="font-medium truncate text-white group-hover:text-green-400 transition-colors">
+            {track.title}
+          </p>
+          <p className="text-gray-400 text-sm truncate">
+            {track.artist}
+          </p>
+        </div>
+
+        {/* Heart icon */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="opacity-0 group-hover:opacity-100 p-0 h-auto text-gray-400 hover:text-white transition-opacity"
+        >
+          <Heart className="w-4 h-4" />
+        </Button>
+
+        {/* More options */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="opacity-0 group-hover:opacity-100 p-0 h-auto text-gray-400 hover:text-white transition-opacity"
+        >
+          <MoreHorizontal className="w-4 h-4" />
+        </Button>
+
+        {/* Duration */}
+        <span className="text-gray-400 text-sm w-12 text-right">
+          {track.duration}
+        </span>
+      </div>
+    ))}
+  </div>
+) : (
+  <div className="text-center py-8">
+    <p className="text-gray-400">
+      No tracks available for this album
+    </p>
+  </div>
+)}
           </div>
         </div>
 
@@ -340,35 +413,46 @@ export default function Component() {
             <h3 className="text-xl font-semibold mb-6">By the same Artist</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {data.relatedAlbums.map((album) => (
-                <Card
+                <div
                   key={album.id}
-                  className="bg-gray-900 border-gray-800 hover:bg-gray-800 transition-colors cursor-pointer"
+                  className="cursor-pointer"
                   onClick={() => handleRelatedAlbumClick(album.id)}
                 >
-                  <CardContent className="p-3">
-                    <div className="aspect-square bg-gray-700 rounded-lg mb-3 overflow-hidden">
-                      <Image
-                        src={isValidUrl(album.artworkPath) ? album.artworkPath : "/placeholder.svg"}
-                        alt={album.title}
-                        width={150}
-                        height={150}
-                        className="w-full h-full object-cover"
-                        crossOrigin="anonymous"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = "/placeholder.svg";
-                        }}
-                      />
-                    </div>
-                    <h4 className="font-medium text-white text-sm truncate" title={album.title}>
-                      {album.title}
-                    </h4>
-                    <p className="text-gray-400 text-xs truncate" title={album.artist}>
-                      {album.artist}
-                    </p>
-                    <p className="text-gray-500 text-xs">{album.datecreated}</p>
-                  </CardContent>
-                </Card>
+                  <div className="aspect-square bg-gray-700 rounded-lg mb-3 overflow-hidden">
+                    <Image
+                      src={
+                        isValidUrl(album.artworkPath)
+                          ? album.artworkPath
+                          : "/placeholder.svg"
+                      }
+                      alt={album.title}
+                      width={150}
+                      height={150}
+                      className="w-full h-full object-cover"
+                      crossOrigin="anonymous"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "/placeholder.svg";
+                      }}
+                    />
+                  </div>
+                  <h4
+                    className="font-medium text-white text-sm truncate hover:underline hover:cursor-pointer"
+                    title={album.title}
+                  >
+                    {album.title}
+                  </h4>
+
+                  <p
+                    className="text-gray-400 text-xs truncate hover:underline hover:cursor-pointer"
+                    title={album.artist}
+                  >
+                    {album.artist}
+                    <span className="text-gray-500 ml-2 text-xs">
+                      {album.datecreated}
+                    </span>
+                  </p>
+                </div>
               ))}
             </div>
           </div>

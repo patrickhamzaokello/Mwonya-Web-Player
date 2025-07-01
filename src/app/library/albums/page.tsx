@@ -10,7 +10,7 @@ export default function AlbumsPage() {
         </p>
         {/* Sample album */}
         <div className="mt-6">
-          <Link href="/library/albums/mw_alb378f121f-300b-4e86-a3c4-6da8d85378cd">
+          <Link href="/library/albums/m_al63b3379a99c11155">
             <p className="text-blue-500 hover:underline">
               Sample Album (ID: 1)
             </p>
