@@ -6,6 +6,7 @@ import {
   Heart,
   MoreHorizontal,
   Play,
+  Pause,
   Share,
   RefreshCw,
   AlertCircle,
@@ -19,6 +20,7 @@ import {
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { useAudio } from "@/contexts/EnhancedAudioContext";
 
 // Utility function to validate URLs
 const isValidUrl = (string: string): boolean => {
@@ -45,6 +47,9 @@ export default function Component() {
   const params = useParams();
   const router = useRouter();
   const albumId = params?.id;
+
+  // Audio context integration
+  const { setQueue, play, pause, currentTrack, isPlaying } = useAudio();
 
   const [data, setData] = useState<AlbumData | null>(null);
   const [loadingState, setLoadingState] = useState<LoadingState>({
@@ -104,6 +109,54 @@ export default function Component() {
   useEffect(() => {
     fetchAlbumData();
   }, [fetchAlbumData]);
+
+  // Audio control functions
+  const handlePlayAlbum = () => {
+    if (data?.tracks?.length ?? 0 > 0) {
+      // Set the entire album as the queue and play from the first track
+      if (data && data.tracks) {
+        const formattedTracks = data.tracks.map((track) => ({
+          ...track,
+          duration: Number(track.duration),
+        }));
+        setQueue(formattedTracks, 0);
+      }
+      if (data && data.tracks && data.tracks.length > 0) {
+        play({
+          ...data.tracks[0],
+          duration: Number(data.tracks[0].duration),
+        });
+      }
+      // Removed redundant block using undefined 'index'
+    }
+  };
+  const handlePlayTrack = (track: any, index: number) => {
+    if ((data?.tracks ?? []).length > 0) {
+      // Set the album tracks as queue starting from the selected track
+      if (data && data.tracks) {
+        const formattedTracks = data.tracks.map((track) => ({
+          ...track,
+          duration: Number(track.duration),
+        }));
+        setQueue(formattedTracks, index);
+      }
+      play(track);
+    }
+  };
+
+  const handlePauseTrack = () => {
+    pause();
+  };
+
+  // Check if current track is from this album
+  const isCurrentAlbumPlaying =
+    data?.tracks?.some((track: any) => track.id === currentTrack?.id) &&
+    isPlaying;
+
+  // Check if a specific track is currently playing
+  const isTrackPlaying = (track: any) => {
+    return currentTrack?.id === track.id && isPlaying;
+  };
 
   const handleRefresh = () => {
     fetchAlbumData(true);
@@ -303,9 +356,24 @@ export default function Component() {
               />
             </div>
             <div className="flex gap-3 w-full">
-              <Button className="bg-[#5E00E2] hover:bg-purple-700 text-white flex-1">
-                <Play className="w-4 h-4 mr-2" />
-                Play
+              <Button
+                className="bg-[#5E00E2] hover:bg-purple-700 text-white flex-1"
+                onClick={
+                  isCurrentAlbumPlaying ? handlePauseTrack : handlePlayAlbum
+                }
+                disabled={!data.tracks || data.tracks.length === 0}
+              >
+                {isCurrentAlbumPlaying ? (
+                  <>
+                    <Pause className="w-4 h-4 mr-2" />
+                    Pause
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 mr-2" />
+                    Play
+                  </>
+                )}
               </Button>
               <Button
                 variant="outline"
@@ -335,75 +403,120 @@ export default function Component() {
                 )}
             </div>
 
-           {/* Tracklist */}
-{data.tracks && data.tracks.length > 0 ? (
-  <div className="space-y-1">
-    <h3 className="text-lg font-semibold mb-4">
-      Tracks ({data.tracks.length})
-    </h3>
-    {data.tracks.map((track, index) => (
-      <div
-        key={track.id}
-        className={`group flex items-center gap-3 p-2 rounded-md hover:bg-gray-800/50 transition-all duration-200 cursor-pointer ${
-            index !== data.tracks.length - 1 ? "border-b border-gray" : ""
-          }`}
-      >
-        {/* Track number / Play button */}
-        <div className="w-5 flex items-center justify-center">
-          <span className="text-gray-400 text-sm group-hover:hidden">
-            {index + 1}
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="hidden group-hover:flex p-0 h-auto text-gray-400 hover:text-white"
-          >
-            <Play className="w-4 h-4 fill-current" />
-          </Button>
-        </div>
+            {/* Tracklist */}
+            {data.tracks && data.tracks.length > 0 ? (
+              <div className="space-y-1">
+                <h3 className="text-lg font-semibold mb-4">
+                  Tracks ({data.tracks.length})
+                </h3>
+                {data.tracks.map((track, index) => {
+                  const isCurrentTrack = isTrackPlaying(track);
 
-        {/* Track info */}
-        <div className="flex-1 min-w-0">
-          <p className="font-medium truncate text-white group-hover:text-green-400 transition-colors">
-            {track.title}
-          </p>
-          <p className="text-gray-400 text-sm truncate">
-            {track.artist}
-          </p>
-        </div>
+                  return (
+                    <div
+                      key={track.id}
+                      className={`group flex items-center gap-3 p-2 rounded-md hover:bg-gray-800/50 transition-all duration-200 cursor-pointer ${
+                        index !== data.tracks.length - 1
+                          ? "border-b border-gray-800"
+                          : ""
+                      } ${isCurrentTrack ? "bg-gray-800/30" : ""}`}
+                      onClick={() => handlePlayTrack(track, index)}
+                    >
+                      {/* Track number / Play button */}
+                      <div className="w-5 flex items-center justify-center">
+                        {isCurrentTrack ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="p-0 h-auto text-green-400 hover:text-green-300"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              isPlaying ? handlePauseTrack() : play({ ...track, duration: Number(track.duration) });
+                            }}
+                          >
+                            {isPlaying ? (
+                              <Pause className="w-4 h-4 fill-current" />
+                            ) : (
+                              <Play className="w-4 h-4 fill-current" />
+                            )}
+                          </Button>
+                        ) : (
+                          <>
+                            <span className="text-gray-400 text-sm group-hover:hidden">
+                              {index + 1}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="hidden group-hover:flex p-0 h-auto text-gray-400 hover:text-white"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePlayTrack(track, index);
+                              }}
+                            >
+                              <Play className="w-4 h-4 fill-current" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
 
-        {/* Heart icon */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="opacity-0 group-hover:opacity-100 p-0 h-auto text-gray-400 hover:text-white transition-opacity"
-        >
-          <Heart className="w-4 h-4" />
-        </Button>
+                      {/* Track info */}
+                      <div className="flex-1 min-w-0">
+                        <p
+                          className={`font-medium truncate transition-colors ${
+                            isCurrentTrack
+                              ? "text-green-400"
+                              : "text-white group-hover:text-green-400"
+                          }`}
+                        >
+                          {track.title}
+                        </p>
+                        <p className="text-gray-400 text-sm truncate">
+                          {track.artist || data.artistName}
+                        </p>
+                      </div>
 
-        {/* More options */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="opacity-0 group-hover:opacity-100 p-0 h-auto text-gray-400 hover:text-white transition-opacity"
-        >
-          <MoreHorizontal className="w-4 h-4" />
-        </Button>
+                      {/* Heart icon */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="opacity-0 group-hover:opacity-100 p-0 h-auto text-gray-400 hover:text-white transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Add to favorites logic here
+                        }}
+                      >
+                        <Heart className="w-4 h-4" />
+                      </Button>
 
-        {/* Duration */}
-        <span className="text-gray-400 text-sm w-12 text-right">
-          {track.duration}
-        </span>
-      </div>
-    ))}
-  </div>
-) : (
-  <div className="text-center py-8">
-    <p className="text-gray-400">
-      No tracks available for this album
-    </p>
-  </div>
-)}
+                      {/* More options */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="opacity-0 group-hover:opacity-100 p-0 h-auto text-gray-400 hover:text-white transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Show context menu logic here
+                        }}
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
+
+                      {/* Duration */}
+                      <span className="text-gray-400 text-sm w-12 text-right">
+                        {track.duration}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-400">
+                  No tracks available for this album
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
