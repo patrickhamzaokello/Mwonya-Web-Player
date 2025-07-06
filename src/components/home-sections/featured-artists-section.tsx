@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRef, useState, useEffect } from "react"
 import type { Artist } from "@/lib/home_feed_types"
+import { customUrlImageLoader } from "@/lib/utils"
 
 interface FeaturedArtistsSectionProps {
   artists: Artist[]
@@ -110,6 +111,7 @@ export function FeaturedArtistsSection({ artists, heading }: FeaturedArtistsSect
                 alt={artist.name}
                 width={160}
                 height={160}
+                 loader={customUrlImageLoader}
                 className="aspect-square object-cover transition-all duration-300 group-hover:brightness-90"
               />
             </div>

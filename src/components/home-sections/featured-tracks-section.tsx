@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import { useRef, useState, useEffect } from "react"
 import {  Track } from "@/lib/home_feed_types"
 import { useAudio } from "@/contexts/EnhancedAudioContext"
+import { customUrlImageLoader } from "@/lib/utils"
+import Link from "next/link"
 interface FeaturedTracksSectionProps {
   tracks: Track[]
   heading: string
@@ -21,7 +23,7 @@ export default function FeaturedTracksSection({ tracks, heading }: FeaturedTrack
   
   const handlePlayTrending = (track: Track) => {
     // rename key path to url in the track
-    const updatedTrack = { ...track, url: track.path, artwork: track.artworkPath }
+    const updatedTrack = { ...track, url: track?.path, artwork: track.artworkPath }
     if (tracks?.length > 0) {
       play({ 
         ...updatedTrack, 
@@ -138,6 +140,7 @@ export default function FeaturedTracksSection({ tracks, heading }: FeaturedTrack
                   alt={`${track.title} by ${track.artist}`}
                   width={300}
                   height={300}
+                  loader={customUrlImageLoader}
                   className="aspect-square object-cover transition-all duration-300 group-hover:brightness-75"
                 />
 
@@ -164,10 +167,21 @@ export default function FeaturedTracksSection({ tracks, heading }: FeaturedTrack
 
               {/* Album info */}
               <div className="mt-3 space-y-1">
-                <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors duration-200">
+             
+                <Link
+                  href={`/library/albums/${track.albumID}`}
+                  className="group"
+                >
+                  <h3 className="font-semibold text-foreground truncate group-hover:text-primary hover:underline transition-colors duration-200">
                   {track.title}
-                </h3>
-                <p className="text-sm text-muted-foreground truncate">{track.artist}</p>
+                  </h3>
+                </Link>
+                <Link
+                  href={`/library/artists/${track.artistID}`}
+                  className="group"
+                >
+                <p className="text-sm text-muted-foreground truncate hover:underline transition-colors duration-200">{track.artist}</p>
+                </Link>
               </div>
             </div>
           ))}

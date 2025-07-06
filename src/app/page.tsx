@@ -20,6 +20,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import FeaturedAlbumsSection from "@/components/home-sections/featured-albums";
 import FeaturedTracksSection from "@/components/home-sections/featured-tracks-section";
+import FeaturedPlaylistsSection from "@/components/home-sections/featured-playlist";
 
 export default function HomePage() {
   const { isAuthenticated } = useAuth();
@@ -164,17 +165,13 @@ export default function HomePage() {
                 />
               );
 
-            case CONTENT_TYPES.RECENTLY:
+            case CONTENT_TYPES.PLAYLIST:
               return (
-                <div key={index} className="mb-12">
-                  <h2 className="text-2xl font-bold text-foreground mb-4">
-                    {section.heading}
-                  </h2>
-                  <p className="text-muted-foreground">
-                    {section.subheading ||
-                      "Your recently played tracks will appear here"}
-                  </p>
-                </div>
+                <FeaturedPlaylistsSection
+                    key={index}
+                    playlists={section.featuredPlaylists || []}
+                    heading={section.heading || "Featured Playlists"}
+                  />
               );
 
             case CONTENT_TYPES.TREND:

@@ -1,5 +1,6 @@
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
+import { customUrlImageLoader } from "@/lib/utils"
 
 interface ImageAdProps {
   title: string
@@ -19,6 +20,7 @@ export function ImageAd({ title, description, image, link, type }: ImageAdProps)
             alt={title}
             width={400}
             height={300}
+             loader={customUrlImageLoader}
             className="w-full h-48 md:h-full object-cover"
           />
         </div>

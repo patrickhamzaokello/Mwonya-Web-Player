@@ -31,3 +31,11 @@ export function formatTime(seconds: number): string {
   
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`
   }
+  export const customUrlImageLoader = ({ src }: { src: string }) => {
+    try {
+      new URL(src);
+      return src;
+    } catch {
+      return "/placeholder.svg";
+    }
+  };

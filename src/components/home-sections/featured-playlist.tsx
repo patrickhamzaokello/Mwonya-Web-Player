@@ -1,42 +1,46 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import { Play, Share2, ChevronLeft, ChevronRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { useRef, useState, useEffect } from "react"
-import type { Album } from "@/lib/home_feed_types"
-import { useAudio } from "@/contexts/EnhancedAudioContext"
-import { fetchAlbumTracks } from "@/actions/album_tracks_data" // You'll need to create this action
-import Link from "next/link"
-import { customUrlImageLoader } from "@/lib/utils"
+import Image from "next/image";
+import { Play, Share2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useRef, useState, useEffect } from "react";
+import type { Album, Playlist } from "@/lib/home_feed_types";
+import { useAudio } from "@/contexts/EnhancedAudioContext";
+import { fetchAlbumTracks } from "@/actions/album_tracks_data"; // You'll need to create this action
+import Link from "next/link";
+import { customUrlImageLoader } from "@/lib/utils";
 
-interface FeaturedAlbumsSectionProps {
-  albums: Album[]
-  heading: string
+interface FeaturedPlaylistSectionProps {
+  playlists: Playlist[];
+  heading: string;
 }
 
-export default function FeaturedAlbumsSection({ albums, heading }: FeaturedAlbumsSectionProps) {
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
-  const [canScrollLeft, setCanScrollLeft] = useState(false)
-  const [canScrollRight, setCanScrollRight] = useState(true)
-  const [loadingAlbum, setLoadingAlbum] = useState<string | null>(null)
+export default function FeaturedPlaylistsSection({
+  playlists,
+  heading,
+}: FeaturedPlaylistSectionProps) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [loadingAlbum, setLoadingAlbum] = useState<string | null>(null);
 
-  const { setQueue, play } = useAudio()
+  const { setQueue, play } = useAudio();
 
   const checkScrollButtons = () => {
     if (scrollContainerRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current
-      setCanScrollLeft(scrollLeft > 5)
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 5)
+      const { scrollLeft, scrollWidth, clientWidth } =
+        scrollContainerRef.current;
+      setCanScrollLeft(scrollLeft > 5);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 5);
     }
-  }
+  };
 
   const handlePlayAlbum = async (albumId: string) => {
     try {
-      setLoadingAlbum(albumId)
+      setLoadingAlbum(albumId);
 
       // Fetch album tracks using a server action instead of a hook
-      const tracks = await fetchAlbumTracks(albumId)
+      const tracks = await fetchAlbumTracks(albumId);
 
       if (tracks && tracks.length > 0) {
         const updatedTracks = tracks.map((track) => ({
@@ -46,73 +50,75 @@ export default function FeaturedAlbumsSection({ albums, heading }: FeaturedAlbum
           id: String(track.id),
           duration: Number(track.duration),
           genre: track.genre ?? undefined,
-        }))
+        }));
 
-        setQueue(updatedTracks, 0)
-        play(updatedTracks[0])
+        setQueue(updatedTracks, 0);
+        play(updatedTracks[0]);
       }
     } catch (error) {
-      console.error("Error playing album:", error)
+      console.error("Error playing album:", error);
     } finally {
-      setLoadingAlbum(null)
+      setLoadingAlbum(null);
     }
-  }
+  };
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
-      const container = scrollContainerRef.current
-      const containerWidth = container.clientWidth
-      const itemWidth = 250 + 24
-      const itemsToScroll = Math.floor(containerWidth / itemWidth)
-      const scrollDistance = itemsToScroll * itemWidth
+      const container = scrollContainerRef.current;
+      const containerWidth = container.clientWidth;
+      const itemWidth = 250 + 24;
+      const itemsToScroll = Math.floor(containerWidth / itemWidth);
+      const scrollDistance = itemsToScroll * itemWidth;
 
       container.scrollBy({
         left: -scrollDistance,
         behavior: "smooth",
-      })
+      });
     }
-  }
+  };
 
   const scrollRight = () => {
     if (scrollContainerRef.current) {
-      const container = scrollContainerRef.current
-      const containerWidth = container.clientWidth
-      const itemWidth = 250 + 24
-      const itemsToScroll = Math.floor(containerWidth / itemWidth)
-      const scrollDistance = itemsToScroll * itemWidth
+      const container = scrollContainerRef.current;
+      const containerWidth = container.clientWidth;
+      const itemWidth = 250 + 24;
+      const itemsToScroll = Math.floor(containerWidth / itemWidth);
+      const scrollDistance = itemsToScroll * itemWidth;
 
       container.scrollBy({
         left: scrollDistance,
         behavior: "smooth",
-      })
+      });
     }
-  }
+  };
 
   useEffect(() => {
-    const container = scrollContainerRef.current
+    const container = scrollContainerRef.current;
     if (container) {
-      checkScrollButtons()
-      const handleScroll = () => checkScrollButtons()
+      checkScrollButtons();
+      const handleScroll = () => checkScrollButtons();
       const handleResize = () => {
-        setTimeout(checkScrollButtons, 100)
-      }
+        setTimeout(checkScrollButtons, 100);
+      };
 
-      container.addEventListener("scroll", handleScroll)
-      window.addEventListener("resize", handleResize)
+      container.addEventListener("scroll", handleScroll);
+      window.addEventListener("resize", handleResize);
 
       return () => {
-        container.removeEventListener("scroll", handleScroll)
-        window.removeEventListener("resize", handleResize)
-      }
+        container.removeEventListener("scroll", handleScroll);
+        window.removeEventListener("resize", handleResize);
+      };
     }
-  }, [])
+  }, []);
 
   return (
     <div className="w-full">
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground mb-2">{heading}</h2>
-          <p className="text-muted-foreground">Discover the latest music from your favorite artists</p>
+          <p className="text-muted-foreground">
+            Discover the latest music from your favorite artists
+          </p>
         </div>
 
         {/* Navigation buttons */}
@@ -144,15 +150,15 @@ export default function FeaturedAlbumsSection({ albums, heading }: FeaturedAlbum
           className="flex gap-6 overflow-x-auto scrollbar-hide pb-4"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
-          {albums.map((album) => (
+          {playlists.map((playlist) => (
             <div
-              key={album.id}
+              key={playlist.id}
               className="group cursor-pointer transition-transform duration-300 flex-shrink-0 w-[200px] md:w-[250px]"
             >
               <div className="relative overflow-hidden rounded-lg bg-muted">
                 <Image
-                  src={album.artworkPath || "/placeholder.svg"}
-                  alt={`${album.title} by ${album.artist}`}
+                  src={playlist.coverurl || "/placeholder.svg"}
+                  alt={`${playlist.name} by ${playlist.owner}`}
                   width={300}
                   height={300}
                    loader={customUrlImageLoader}
@@ -165,10 +171,10 @@ export default function FeaturedAlbumsSection({ albums, heading }: FeaturedAlbum
                     <Button
                       size="icon"
                       className="bg-white/90 hover:bg-white text-black hover:text-black backdrop-blur-sm transition-all duration-200 rounded-full h-10 w-10"
-                      onClick={() => handlePlayAlbum(album.id)}
-                      disabled={loadingAlbum === album.id}
+                      onClick={() => handlePlayAlbum(playlist.id)}
+                      disabled={loadingAlbum === playlist.id}
                     >
-                      {loadingAlbum === album.id ? (
+                      {loadingAlbum === playlist.id ? (
                         <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                       ) : (
                         <Play className="w-4 h-4 fill-current" />
@@ -187,20 +193,22 @@ export default function FeaturedAlbumsSection({ albums, heading }: FeaturedAlbum
 
               {/* Album info */}
               <div className="mt-3 space-y-1">
-              <Link
-                  href={`/library/albums/${album.id}`}
+                <Link
+                  href={`/library/playlists/${playlist.id}`}
                   className="group"
                 >
                   <h3 className="font-semibold text-foreground truncate group-hover:text-primary hover:underline transition-colors duration-200">
-                    {album.title}
+                    {playlist.name}
                   </h3>
                 </Link>
-                <p className="text-sm text-muted-foreground truncate">{album.artist}</p>
+                <p className="text-sm text-muted-foreground truncate">
+                  {playlist.owner}
+                </p>
               </div>
             </div>
           ))}
         </div>
       </div>
     </div>
-  )
+  );
 }

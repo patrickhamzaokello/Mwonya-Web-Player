@@ -1,98 +1,129 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import { Play, ChevronLeft, ChevronRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { useRef, useState, useEffect } from "react"
-import type { NewRelease } from "@/lib/home_feed_types"
+import Image from "next/image";
+import { Play, ChevronLeft, ChevronRight, CheckCircle, Heart, MoreHorizontal, Share } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useRef, useState, useEffect } from "react";
+import type { NewRelease, Track } from "@/lib/home_feed_types";
+import { useAudio } from "@/contexts/EnhancedAudioContext";
+import { customUrlImageLoader } from "@/lib/utils";
 
 interface NewReleasesSectionProps {
-  releases: NewRelease[]
-  heading: string
+  releases: NewRelease[];
+  heading: string;
 }
 
-export function NewReleasesSection({ releases, heading }: NewReleasesSectionProps) {
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
-  const [canScrollLeft, setCanScrollLeft] = useState(false)
-  const [canScrollRight, setCanScrollRight] = useState(true)
+export function NewReleasesSection({
+  releases,
+  heading,
+}: NewReleasesSectionProps) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const { setQueue, play, currentTrack, isPlaying } = useAudio();
 
   const checkScrollButtons = () => {
     if (scrollContainerRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current
-      setCanScrollLeft(scrollLeft > 5)
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 5)
+      const { scrollLeft, scrollWidth, clientWidth } =
+        scrollContainerRef.current;
+      setCanScrollLeft(scrollLeft > 5);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 5);
     }
-  }
+  };
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
-      const container = scrollContainerRef.current
-      const containerWidth = container.clientWidth
-      const itemWidth = 300 + 24
-      const itemsToScroll = Math.floor(containerWidth / itemWidth)
-      const scrollDistance = itemsToScroll * itemWidth
+      const container = scrollContainerRef.current;
+      const containerWidth = container.clientWidth;
+      const itemWidth = 450 + 32; // Increased width for prominent design
+      const itemsToScroll = Math.floor(containerWidth / itemWidth);
+      const scrollDistance = itemsToScroll * itemWidth;
 
       container.scrollBy({
         left: -scrollDistance,
         behavior: "smooth",
-      })
+      });
     }
-  }
+  };
 
   const scrollRight = () => {
     if (scrollContainerRef.current) {
-      const container = scrollContainerRef.current
-      const containerWidth = container.clientWidth
-      const itemWidth = 300 + 24
-      const itemsToScroll = Math.floor(containerWidth / itemWidth)
-      const scrollDistance = itemsToScroll * itemWidth
+      const container = scrollContainerRef.current;
+      const containerWidth = container.clientWidth;
+      const itemWidth = 450 + 32;
+      const itemsToScroll = Math.floor(containerWidth / itemWidth);
+      const scrollDistance = itemsToScroll * itemWidth;
 
       container.scrollBy({
         left: scrollDistance,
         behavior: "smooth",
-      })
+      });
     }
-  }
+  };
+
+  const handlePlayRelease = (release: NewRelease) => {
+    // Fetch album tracks using a server action instead of a hook
+    const tracks = release.Tracks || [];
+
+    if (tracks && tracks.length > 0) {
+      const updatedTracks = tracks.map((track) => ({
+        ...track,
+        url: track.path,
+        id: String(track.id),
+        artwork: release.artworkPath,
+        duration: Number(track.duration),
+        genre: track.genre ?? undefined,
+      }));
+
+      setQueue(updatedTracks, 0);
+      play(updatedTracks[0]);
+    }
+  };
 
   useEffect(() => {
-    const container = scrollContainerRef.current
+    const container = scrollContainerRef.current;
     if (container) {
-      checkScrollButtons()
-      const handleScroll = () => checkScrollButtons()
-      const handleResize = () => setTimeout(checkScrollButtons, 100)
+      checkScrollButtons();
+      const handleScroll = () => checkScrollButtons();
+      const handleResize = () => setTimeout(checkScrollButtons, 100);
 
-      container.addEventListener("scroll", handleScroll)
-      window.addEventListener("resize", handleResize)
+      container.addEventListener("scroll", handleScroll);
+      window.addEventListener("resize", handleResize);
 
       return () => {
-        container.removeEventListener("scroll", handleScroll)
-        window.removeEventListener("resize", handleResize)
-      }
+        container.removeEventListener("scroll", handleScroll);
+        window.removeEventListener("resize", handleResize);
+      };
     }
-  }, [])
+  }, []);
 
   return (
-    <div className="w-full mb-12">
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-foreground">{heading}</h2>
-        <div className="flex gap-2">
+    <div className="w-full mb-16">
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h2 className="text-4xl font-bold text-foreground mb-2">{heading}</h2>
+          <p className="text-lg text-muted-foreground">
+            Fresh music from your favorite artists
+          </p>
+        </div>
+        <div className="flex gap-3">
           <Button
             variant="outline"
             size="icon"
             onClick={scrollLeft}
             disabled={!canScrollLeft}
-            className="h-8 w-8 rounded-full bg-transparent"
+            className="h-12 w-12 rounded-full bg-background border-2 hover:bg-muted"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-5 w-5" />
           </Button>
           <Button
             variant="outline"
             size="icon"
             onClick={scrollRight}
             disabled={!canScrollRight}
-            className="h-8 w-8 rounded-full bg-transparent"
+            className="h-12 w-12 rounded-full bg-background border-2 hover:bg-muted"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-5 w-5" />
           </Button>
         </div>
       </div>
@@ -103,40 +134,86 @@ export function NewReleasesSection({ releases, heading }: NewReleasesSectionProp
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {releases.map((release) => (
-          <div key={release.id} className="flex-shrink-0 w-[280px] bg-card rounded-lg p-4 border">
-            <div className="relative overflow-hidden rounded-lg bg-muted mb-4">
-              <Image
-                src={release.artworkPath || "/placeholder.svg"}
-                alt={release.title}
-                width={300}
-                height={300}
-                className="aspect-square object-cover"
-              />
+          <div
+            key={release.id}
+            className="group flex-shrink-0 w-[300px] bg-card rounded-xl border hover:shadow-lg transition-all duration-300"
+          >
+            {/* Album Cover with Artist Info Overlay */}
+            <div className="relative">
+              <div className="relative overflow-hidden rounded-t-xl bg-muted">
+                <Image
+                  src={release.artworkPath || "/placeholder.svg"}
+                  alt={release.title}
+                  width={300}
+                  height={200}
+                  loader={customUrlImageLoader}
+                  className="w-full h-48 object-cover transition-all duration-300 group-hover:scale-105"
+                />
+
+                {/* Play Button Overlay */}
+                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                  <Button
+                    size="icon"
+                    className="bg-white/90 hover:bg-white text-black rounded-full h-12 w-12 shadow-lg"
+                    onClick={() => handlePlayRelease(release)}
+                    disabled={isPlaying && currentTrack?.id === String(release.id)}
+                  >
+                    <Play className="w-5 h-5 fill-current" />
+                  </Button>
+                </div>
+
+                {/* Artist Badge */}
+                <div className="absolute top-3 left-3 flex items-center gap-2 bg-black/60 backdrop-blur-sm rounded-full px-3 py-1">
+                  <div className="w-6 h-6 rounded-full overflow-hidden">
+                    <Image
+                      src={release.artistArtwork || "/placeholder.svg"}
+                      alt={release.artist}
+                      width={24}
+                      height={24}
+                       loader={customUrlImageLoader}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span className="text-white text-xs font-medium">{release.artist}</span>
+                  {/* Assuming verified artists, you can add condition here */}
+                  <CheckCircle className="w-3 h-3 text-blue-400" />
+                </div>
+
+                {/* Release Type Badge */}
+                {release.exclusive && (
+                  <div className="absolute top-3 right-3 bg-primary text-primary-foreground text-xs font-medium px-2 py-1 rounded-full">
+                    Exclusive
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">{release.heading}</p>
-              <h3 className="font-semibold text-foreground truncate">{release.title}</h3>
-              <p className="text-sm text-muted-foreground">{release.artist}</p>
-              <p className="text-xs text-muted-foreground">{release.tag}</p>
+            {/* Content */}
+            <div className="p-4">
+              {/* Release Info */}
+              <div className="mb-4">
+                <h3 className="font-bold text-lg text-foreground mb-1 truncate">{release.title}</h3>
+                <p className="text-sm text-muted-foreground">{release.tag}</p>
+              </div>
 
-              {release.Tracks && release.Tracks.length > 0 && (
-                <div className="mt-3 space-y-2">
-                  {release.Tracks.slice(0, 3).map((track) => (
-                    <div key={track.id} className="flex items-center gap-2 text-sm">
-                      <Button size="icon" variant="ghost" className="h-6 w-6">
-                        <Play className="w-3 h-3 fill-current" />
-                      </Button>
-                      <span className="flex-1 truncate">{track.title}</span>
-                      <span className="text-muted-foreground">{track.duration}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+             
+
+              {/* Action Buttons - Compact */}
+              <div className="flex items-center gap-2">
+                <Button size="sm" className="flex-1 h-8 text-xs font-medium">
+                  Details
+                </Button>
+                <Button size="icon" variant="outline" className="h-8 w-8 bg-transparent">
+                  <Heart className="w-3 h-3" />
+                </Button>
+                <Button size="icon" variant="outline" className="h-8 w-8 bg-transparent">
+                  <Share className="w-3 h-3" />
+                </Button>
+              </div>
             </div>
           </div>
         ))}
       </div>
     </div>
-  )
+  );
 }
