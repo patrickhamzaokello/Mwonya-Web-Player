@@ -9,7 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 import { useHomeFeed } from "@/hooks/use-home-feed";
 import { DEFAULT_USER_ID, CONTENT_TYPES } from "@/lib/constants";
-import { HeroSection } from "@/components/home-sections/hero-section";
+import { MusicHeroSlider } from "@/components/home-sections/hero-section";
 import { ImageAd } from "@/components/home-sections/image-ad";
 import { NewReleasesSection } from "@/components/home-sections/new-releases-section";
 import { FeaturedArtistsSection } from "@/components/home-sections/featured-artists-section";
@@ -86,13 +86,11 @@ export default function HomePage() {
       <div className="space-y-8 p-6">
         {data.featured.map((section, index) => {
           switch (section.type) {
-            case CONTENT_TYPES.HERO:
+            case CONTENT_TYPES.SLIDER:
               return (
-                <HeroSection
-                  key={index}
-                  heading={section.heading || "Welcome"}
-                  subheading={section.subheading || "Discover amazing music"}
-                />
+                <MusicHeroSlider
+                 
+                 />
               );
 
             case CONTENT_TYPES.IMAGE_AD:
