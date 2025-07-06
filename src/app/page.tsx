@@ -1,40 +1,36 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import Image from 'next/image';
-import { Button } from '@/components/ui/button';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Play, Pause } from 'lucide-react';
-import { api } from '@/lib/api';
-import { useAudio } from '@/contexts/EnhancedAudioContext';
-import { TrackCard } from '@/components/music/TrackCard';
-import { AlbumCard } from '@/components/music/AlbumCard';
-import { PlaylistCard } from '@/components/music/PlaylistCard';
-import { useAuth } from '@/contexts/AuthContext';
-import { customLoader } from '@/lib/utils';
+import React, { useEffect, useState } from "react";
+
+import { useAudio } from "@/contexts/EnhancedAudioContext";
+
+import { useAuth } from "@/contexts/AuthContext";
+
+
+import { useHomeFeed } from "@/hooks/use-home-feed";
+import { DEFAULT_USER_ID, CONTENT_TYPES } from "@/lib/constants";
+import { HeroSection } from "@/components/home-sections/hero-section";
+import { ImageAd } from "@/components/home-sections/image-ad";
+import { NewReleasesSection } from "@/components/home-sections/new-releases-section";
+import { FeaturedArtistsSection } from "@/components/home-sections/featured-artists-section";
+import { WeeklyTopSection } from "@/components/home-sections/weekly-top-section";
+import { GenreSection } from "@/components/home-sections/genre-section";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import FeaturedAlbumsSection from "@/components/home-sections/featured-albums";
+import FeaturedTracksSection from "@/components/home-sections/featured-tracks-section";
 
 export default function HomePage() {
   const { isAuthenticated } = useAuth();
   const { setQueue, play, currentTrack, isPlaying } = useAudio();
-  const [homeData, setHomeData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, loading, error } = useHomeFeed(DEFAULT_USER_ID);
 
   useEffect(() => {
     if (isAuthenticated) {
-      loadHomeData();
+      // loadHomeData();
     }
   }, [isAuthenticated]);
-
-  const loadHomeData = async () => {
-    try {
-      const data = await api.getHomeContent();
-      setHomeData(data);
-    } catch (error) {
-      console.error('Failed to load home content:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (!isAuthenticated) {
     return null; // Will be handled by AppShell redirect
@@ -42,138 +38,172 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+        <Skeleton className="h-64 w-full rounded-lg" />
+        <Skeleton className="h-8 w-64" />
+        <div className="flex gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-80 w-64 rounded-lg" />
+          ))}
+        </div>
+        <Skeleton className="h-8 w-48" />
+        <div className="flex gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-48 w-40 rounded-full" />
+          ))}
+        </div>
       </div>
     );
   }
 
-  const handlePlayTrending = () => {
-    if (homeData?.trendingTracks?.length > 0) {
-      setQueue(homeData.trendingTracks, 0);
-      play(homeData.trendingTracks[0]);
-    }
-  };
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Failed to load home feed. Please try again later.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
-  const isTrendingPlaying = homeData?.trendingTracks?.some(
-    (track: any) => track.id === currentTrack?.id
-  ) && isPlaying;
+  if (!data) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>No data available at the moment.</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full overflow-auto">
       <div className="space-y-8 p-6">
-        {/* Hero Section */}
-        <section className="relative rounded-xl overflow-hidden bg-gradient-to-r from-purple-600 to-blue-600 text-white">
-          <div className="absolute inset-0">
-            <Image
-            loader={customLoader}
-              src={homeData?.hero?.backgroundImage || 'https://picsum.photos/1200/400?random=100'}
-              alt="Hero background"
-              fill
-              className="object-cover opacity-30"
-            />
-          </div>
-          <div className="relative p-8 md:p-12">
-            <h1 className="text-4xl md:text-6xl font-bold mb-4">
-              {homeData?.hero?.title || 'Welcome to Music'}
-            </h1>
-            <p className="text-lg md:text-xl mb-6 max-w-2xl opacity-90">
-              {homeData?.hero?.subtitle || 'Discover your next favorite song'}
-            </p>
-            <Button size="lg" variant="secondary" onClick={handlePlayTrending}>
-              <Play className="mr-2 h-5 w-5" />
-              Play Trending Now
-            </Button>
-          </div>
-        </section>
+        {data.featured.map((section, index) => {
+          switch (section.type) {
+            case CONTENT_TYPES.HERO:
+              return (
+                <HeroSection
+                  key={index}
+                  heading={section.heading || "Welcome"}
+                  subheading={section.subheading || "Discover amazing music"}
+                />
+              );
 
-        {/* Trending Tracks */}
-        <section>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold">Trending Now</h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-10 w-10 rounded-full"
-              onClick={handlePlayTrending}
-            >
-              {isTrendingPlaying ? (
-                <Pause className="h-5 w-5" />
-              ) : (
-                <Play className="h-5 w-5" />
-              )}
-            </Button>
-          </div>
-          <div className="space-y-1">
-            {homeData?.trendingTracks?.slice(0, 6).map((track: any, index: number) => (
-              <TrackCard
-                key={track.id}
-                track={track}
-                index={index}
-                showArtwork={true}
-                showAlbum={true}
-              />
-            ))}
-          </div>
-        </section>
+            case CONTENT_TYPES.IMAGE_AD:
+              return (
+                <ImageAd
+                  key={index}
+                  title={section.ad_title || ""}
+                  description={section.ad_description || ""}
+                  image={section.ad_image || ""}
+                  link={section.ad_link || ""}
+                  type={section.ad_type || ""}
+                />
+              );
 
-        {/* New Releases */}
-        <section>
-          <h2 className="text-2xl font-bold mb-6">New Releases</h2>
-          <ScrollArea>
-            <div className="flex space-x-4 pb-4">
-              {homeData?.newReleases?.map((album: any) => (
-                <AlbumCard key={album.id} album={album} size="md" />
-              ))}
-            </div>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
-        </section>
+            case CONTENT_TYPES.NEW_RELEASE:
+              return (
+                <NewReleasesSection
+                  key={index}
+                  releases={section.HomeRelease || []}
+                  heading={section.heading || "New Releases"}
+                />
+              );
 
-        {/* Featured Playlists */}
-        <section>
-          <h2 className="text-2xl font-bold mb-6">Featured Playlists</h2>
-          <ScrollArea>
-            <div className="flex space-x-4 pb-4">
-              {homeData?.featuredPlaylists?.map((playlist: any) => (
-                <PlaylistCard key={playlist.id} playlist={playlist} size="md" />
-              ))}
-            </div>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
-        </section>
+            case CONTENT_TYPES.ARTIST:
+              return (
+                <FeaturedArtistsSection
+                  key={index}
+                  artists={section.featuredArtists || []}
+                  heading={section.heading || "Featured Artists"}
+                />
+              );
 
-        {/* Top Artists */}
-        <section>
-          <h2 className="text-2xl font-bold mb-6">Top Artists</h2>
-          <ScrollArea>
-            <div className="flex space-x-4 pb-4">
-              {homeData?.topArtists?.map((artist: any) => (
-                <div key={artist.id} className="w-40 group">
-                  <div className="relative">
-                    <div className="w-40 h-40 bg-muted rounded-full overflow-hidden mb-3">
-                      <Image
-                           loader={customLoader}
-                        src={artist.avatar}
-                        alt={artist.name}
-                        width={160}
-                        height={160}
-                        className="object-cover"
-                      />
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <h3 className="font-medium text-sm truncate">{artist.name}</h3>
-                    <p className="text-xs text-muted-foreground">
-                      {artist.monthlyListeners?.toLocaleString()} monthly listeners
-                    </p>
-                  </div>
+            case CONTENT_TYPES.ALBUMS:
+              return (
+                <FeaturedAlbumsSection
+                  key={index}
+                  albums={section.featuredAlbums || []}
+                  heading={section.heading || "Featured Albums"}
+                />
+              );
+
+              case CONTENT_TYPES.DJS:
+                return (
+                  <FeaturedAlbumsSection
+                    key={index}
+                    albums={section.FeaturedDjMixes || []}
+                    heading={section.heading || "Featured Mixtapes"}
+                  />
+                );
+
+            case CONTENT_TYPES.GENRE:
+              return (
+                <GenreSection
+                  key={index}
+                  genres={section.featuredGenres || []}
+                  heading={section.heading || "Featured Genres"}
+                />
+              );
+
+            case CONTENT_TYPES.TIMELY:
+              return (
+                <WeeklyTopSection
+                  key={index}
+                  tracks={section.Tracks || []}
+                  heading={section.heading || "Weekly Top 10"}
+                  subheading={section.subheading || ""}
+                  weekArtist={section.weekartist || ""}
+                  weekDate={section.weekdate || ""}
+                  weekImage={section.weekimage || ""}
+                />
+              );
+
+            case CONTENT_TYPES.RECENTLY:
+              return (
+                <div key={index} className="mb-12">
+                  <h2 className="text-2xl font-bold text-foreground mb-4">
+                    {section.heading}
+                  </h2>
+                  <p className="text-muted-foreground">
+                    {section.subheading ||
+                      "Your recently played tracks will appear here"}
+                  </p>
                 </div>
-              ))}
-            </div>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
-        </section>
+              );
+
+            case CONTENT_TYPES.TREND:
+              return (
+                <FeaturedTracksSection
+                key={index}
+                tracks={section.Tracks || []}
+                heading={section.heading || "Featured Tracks"}
+              />
+              );
+
+            case CONTENT_TYPES.TEXT_AD:
+              return (
+                <div
+                  key={index}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg p-6 mb-8"
+                >
+                  <h3 className="text-xl font-bold mb-2">{section.ad_title}</h3>
+                  <p className="mb-4">{section.ad_description}</p>
+                  <button className="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                    Learn More
+                  </button>
+                </div>
+              );
+
+            default:
+              return null;
+          }
+        })}
       </div>
     </div>
   );
