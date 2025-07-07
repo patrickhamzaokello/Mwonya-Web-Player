@@ -3,57 +3,13 @@
 import React, { createContext, useContext, useReducer, useRef, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import Hls from 'hls.js';
-import { Track, PlaybackAnalytics, UserInteraction } from '@/types/audio';
+import { Track, AudioState, PlaybackAnalytics, UserInteraction, AudioActions } from '@/types/audio';
 
-
-
-export interface AudioState {
-  isPlaying: boolean;
-  currentTrack: Track | null;
-  queue: Track[];
-  currentIndex: number;
-  volume: number;
-  isMuted: boolean;
-  isShuffled: boolean;
-  repeatMode: 'off' | 'all' | 'one';
-  currentTime: number;
-  duration: number;
-  isLoading: boolean;
-  error: string | null;
-  isCrossfading: boolean;
-  nextTrack: Track | null;
-}
-
-export interface AudioActions {
-  play: (track?: Track) => void;
-  pause: () => void;
-  togglePlay: () => void;
-  next: () => void;
-  previous: () => void;
-  seek: (time: number) => void;
-  setVolume: (volume: number) => void;
-  toggleMute: () => void;
-  setQueue: (tracks: Track[], startIndex?: number) => void;
-  addToQueue: (track: Track) => void;
-  removeFromQueue: (index: number) => void;
-  clearQueue: () => void;
-  toggleShuffle: () => void;
-  setRepeatMode: (mode: 'off' | 'all' | 'one') => void;
-  trackPlay: (track: Track, source: string, sourceId?: string) => void;
-  trackSkip: (track: Track) => void;
-  trackComplete: (track: Track) => void;
-  trackLike: (track: Track) => void;
-  trackUnlike: (track: Track) => void;
-  trackReport: (track: Track, reason: string) => void;
-}
-
-interface AudioContextType extends AudioState, AudioActions {
-  crossfadeDuration: number;
-  setCrossfadeDuration: (duration: number) => void;
-}
+interface AudioContextType extends AudioState, AudioActions {}
 
 const AudioContext = createContext<AudioContextType | null>(null);
 
+// Audio reducer for state management
 type AudioActionType =
   | { type: 'SET_PLAYING'; payload: boolean }
   | { type: 'SET_CURRENT_TRACK'; payload: Track | null }
@@ -68,13 +24,9 @@ type AudioActionType =
   | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'ADD_TO_QUEUE'; payload: Track }
   | { type: 'REMOVE_FROM_QUEUE'; payload: number }
-  | { type: 'CLEAR_QUEUE' }
-  | { type: 'SET_CROSSFADE_DURATION'; payload: number }
-  | { type: 'SET_CROSSFADING'; payload: boolean }
-  | { type: 'SET_NEXT_TRACK'; payload: Track | null }
-  | { type: 'UPDATE_TRACK_LIKE'; payload: { id: string; isLiked: boolean } };
+  | { type: 'CLEAR_QUEUE' };
 
-const initialState: AudioState & { crossfadeDuration: number } = {
+const initialState: AudioState = {
   isPlaying: false,
   currentTrack: null,
   queue: [],
@@ -87,12 +39,9 @@ const initialState: AudioState & { crossfadeDuration: number } = {
   duration: 0,
   isLoading: false,
   error: null,
-  isCrossfading: false,
-  nextTrack: null,
-  crossfadeDuration: 8,
 };
 
-function audioReducer(state: typeof initialState, action: AudioActionType): typeof initialState {
+function audioReducer(state: AudioState, action: AudioActionType): AudioState {
   switch (action.type) {
     case 'SET_PLAYING':
       return { ...state, isPlaying: action.payload };
@@ -130,33 +79,14 @@ function audioReducer(state: typeof initialState, action: AudioActionType): type
     case 'REMOVE_FROM_QUEUE':
       const newQueue = state.queue.filter((_, index) => index !== action.payload);
       const newIndex = action.payload < state.currentIndex ? state.currentIndex - 1 : state.currentIndex;
-      const adjustedIndex = Math.max(0, Math.min(newIndex, newQueue.length - 1));
       return { 
         ...state, 
         queue: newQueue, 
-        currentIndex: adjustedIndex,
-        currentTrack: newQueue[adjustedIndex] || null
+        currentIndex: Math.max(0, Math.min(newIndex, newQueue.length - 1)),
+        currentTrack: newQueue[Math.max(0, Math.min(newIndex, newQueue.length - 1))] || null
       };
     case 'CLEAR_QUEUE':
       return { ...state, queue: [], currentIndex: 0, currentTrack: null };
-    case 'SET_CROSSFADE_DURATION':
-      return { ...state, crossfadeDuration: action.payload };
-    case 'SET_CROSSFADING':
-      return { ...state, isCrossfading: action.payload };
-    case 'SET_NEXT_TRACK':
-      return { ...state, nextTrack: action.payload };
-    case 'UPDATE_TRACK_LIKE':
-      return {
-        ...state,
-        currentTrack: state.currentTrack?.id === action.payload.id 
-          ? { ...state.currentTrack, isLiked: action.payload.isLiked }
-          : state.currentTrack,
-        queue: state.queue.map(track => 
-          track.id === action.payload.id 
-            ? { ...track, isLiked: action.payload.isLiked }
-            : track
-        )
-      };
     default:
       return state;
   }
@@ -168,426 +98,211 @@ interface AudioProviderProps {
 
 export function AudioProvider({ children }: AudioProviderProps) {
   const [state, dispatch] = useReducer(audioReducer, initialState);
-  
-  // Dual audio setup for crossfading
-  const primaryAudioRef = useRef<HTMLAudioElement | null>(null);
-  const secondaryAudioRef = useRef<HTMLAudioElement | null>(null);
-  const primaryHlsRef = useRef<Hls | null>(null);
-  const secondaryHlsRef = useRef<Hls | null>(null);
-  
-  // Keep track of which audio element is currently active
-  const activeAudioRef = useRef<'primary' | 'secondary'>('primary');
-  
-  // Crossfading refs
-  const crossfadeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const crossfadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const isPreloadingNextTrack = useRef<boolean>(false);
-  
-  // Analytics refs
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const hlsRef = useRef<Hls | null>(null);
   const playbackStartTime = useRef<Date | null>(null);
+  const playbackAnalytics = useRef<PlaybackAnalytics[]>([]);
+  const userInteractions = useRef<UserInteraction[]>([]);
   const hasReportedPlay = useRef<boolean>(false);
   const seekCount = useRef<number>(0);
 
-  // Get current active audio element and HLS instance
-  const getCurrentAudio = useCallback(() => {
-    return activeAudioRef.current === 'primary' 
-      ? { audio: primaryAudioRef.current, hls: primaryHlsRef.current }
-      : { audio: secondaryAudioRef.current, hls: secondaryHlsRef.current };
-  }, []);
-
-  const getInactiveAudio = useCallback(() => {
-    return activeAudioRef.current === 'primary' 
-      ? { audio: secondaryAudioRef.current, hls: secondaryHlsRef.current }
-      : { audio: primaryAudioRef.current, hls: primaryHlsRef.current };
-  }, []);
-
-  // Get next track based on current playback mode
-  const getNextTrack = useCallback((): Track | null => {
-    if (state.queue.length === 0) return null;
-    
-    let nextIndex: number;
-    
-    if (state.repeatMode === 'one') {
-      return state.currentTrack;
-    } else if (state.isShuffled) {
-      // For shuffle, avoid repeating the current track
-      const availableIndices = state.queue
-        .map((_, index) => index)
-        .filter(index => index !== state.currentIndex);
-      if (availableIndices.length === 0) return state.currentTrack;
-      nextIndex = availableIndices[Math.floor(Math.random() * availableIndices.length)];
-    } else {
-      nextIndex = state.currentIndex + 1;
-      if (nextIndex >= state.queue.length) {
-        if (state.repeatMode === 'all') {
-          nextIndex = 0;
-        } else {
-          return null;
-        }
-      }
-    }
-    
-    return state.queue[nextIndex];
-  }, [state.queue, state.currentIndex, state.repeatMode, state.isShuffled, state.currentTrack]);
-
-  // Enhanced crossfading function
-  const performCrossfade = useCallback((fromAudio: HTMLAudioElement, toAudio: HTMLAudioElement) => {
-    if (crossfadeIntervalRef.current) {
-      clearInterval(crossfadeIntervalRef.current);
-    }
-
-    dispatch({ type: 'SET_CROSSFADING', payload: true });
-
-    const steps = 20;
-    const stepDuration = (state.crossfadeDuration * 1000) / steps;
-    let currentStep = 0;
-
-    const initialFromVolume = fromAudio.volume;
-    const targetToVolume = state.volume;
-
-    crossfadeIntervalRef.current = setInterval(() => {
-      currentStep++;
-      const progress = currentStep / steps;
-
-      // Fade out current audio
-      fromAudio.volume = initialFromVolume * (1 - progress);
-      
-      // Fade in next audio
-      toAudio.volume = targetToVolume * progress;
-
-      if (currentStep >= steps) {
-        // Crossfade complete
-        clearInterval(crossfadeIntervalRef.current!);
-        
-        // Pause the old audio
-        fromAudio.pause();
-        fromAudio.currentTime = 0;
-        fromAudio.volume = targetToVolume;
-        
-        // Switch active audio reference
-        activeAudioRef.current = activeAudioRef.current === 'primary' ? 'secondary' : 'primary';
-        
-        dispatch({ type: 'SET_CROSSFADING', payload: false });
-        isPreloadingNextTrack.current = false;
-        
-        console.log('Crossfade completed');
-      }
-    }, stepDuration);
-  }, [state.crossfadeDuration, state.volume]);
-
-  // Enhanced preload next track function
-  const preloadNextTrack = useCallback(() => {
-    if (isPreloadingNextTrack.current || state.queue.length === 0) return;
-    
-    const nextTrack = getNextTrack();
-    if (!nextTrack) return;
-    
-    isPreloadingNextTrack.current = true;
-    dispatch({ type: 'SET_NEXT_TRACK', payload: nextTrack });
-    
-    const { audio: inactiveAudio, hls: inactiveHls } = getInactiveAudio();
-    if (!inactiveAudio) return;
-
-    console.log('Preloading next track:', nextTrack.title);
-
-    // Load the next track into the inactive audio element
-    if (inactiveHls && Hls.isSupported()) {
-      inactiveHls.loadSource(nextTrack.url);
-      
-      const handleManifestParsed = () => {
-        console.log('Next track preloaded and ready');
-        inactiveHls.off(Hls.Events.MANIFEST_PARSED, handleManifestParsed);
-      };
-      
-      inactiveHls.on(Hls.Events.MANIFEST_PARSED, handleManifestParsed);
-    } else if (inactiveAudio.canPlayType('application/vnd.apple.mpegurl')) {
-      inactiveAudio.src = nextTrack.url;
-      inactiveAudio.load();
-    } else {
-      inactiveAudio.src = nextTrack.url;
-      inactiveAudio.load();
-    }
-  }, [getNextTrack, getInactiveAudio, state.queue.length]);
-
-  // Initialize dual audio elements and HLS instances
+  // Initialize audio element and HLS
   useEffect(() => {
-    const primaryAudio = new Audio();
-    const secondaryAudio = new Audio();
+    const audio = new Audio();
+    audioRef.current = audio;
     
-    primaryAudioRef.current = primaryAudio;
-    secondaryAudioRef.current = secondaryAudio;
-    
-    // Initialize HLS instances only if supported
-    let primaryHls: Hls | null = null;
-    let secondaryHls: Hls | null = null;
-    
-    if (Hls.isSupported()) {
-      primaryHls = new Hls({
-        enableWorker: true,
-        lowLatencyMode: true,
-        backBufferLength: 30,
-      });
-      secondaryHls = new Hls({
-        enableWorker: true,
-        lowLatencyMode: true,
-        backBufferLength: 30,
-      });
-      
-      primaryHlsRef.current = primaryHls;
-      secondaryHlsRef.current = secondaryHls;
-      
-      // Attach HLS to audio elements
-      primaryHls.attachMedia(primaryAudio);
-      secondaryHls.attachMedia(secondaryAudio);
-    }
-    
-    // Set initial volumes
-    primaryAudio.volume = state.volume;
-    secondaryAudio.volume = 0;
-    
-    // Event handlers factory
-    const createEventHandlers = (audio: HTMLAudioElement, isPrimary: boolean) => {
-      const handleLoadStart = () => {
-        if (isPrimary === (activeAudioRef.current === 'primary')) {
-          dispatch({ type: 'SET_LOADING', payload: true });
-        }
-      };
-      
-      const handleCanPlay = () => {
-        if (isPrimary === (activeAudioRef.current === 'primary')) {
-          dispatch({ type: 'SET_LOADING', payload: false });
-        }
-      };
-      
-      const handleLoadedMetadata = () => {
-        if (isPrimary === (activeAudioRef.current === 'primary')) {
-          dispatch({ type: 'SET_TIME', payload: { currentTime: 0, duration: audio.duration } });
-        }
-      };
-      
-      const handlePlay = () => {
-        if (isPrimary === (activeAudioRef.current === 'primary')) {
-          dispatch({ type: 'SET_PLAYING', payload: true });
-          playbackStartTime.current = new Date();
-          hasReportedPlay.current = false;
-          seekCount.current = 0;
-        }
-      };
-      
-      const handlePause = () => {
-        if (isPrimary === (activeAudioRef.current === 'primary')) {
-          dispatch({ type: 'SET_PLAYING', payload: false });
-        }
-      };
-      
-      const handleTimeUpdate = () => {
-        if (isPrimary === (activeAudioRef.current === 'primary')) {
-          dispatch({ 
-            type: 'SET_TIME', 
-            payload: { currentTime: audio.currentTime, duration: audio.duration } 
-          });
-          
-          // Start crossfade when approaching end of track
-          const timeRemaining = audio.duration - audio.currentTime;
-          if (timeRemaining <= state.crossfadeDuration && !isPreloadingNextTrack.current && !state.isCrossfading) {
-            preloadNextTrack();
-            
-            // Start crossfade if next track is ready
-            const { audio: inactiveAudio } = getInactiveAudio();
-            if (inactiveAudio && inactiveAudio.readyState >= 2) {
-              // Set the inactive audio to start position and play
-              inactiveAudio.currentTime = 0;
-              inactiveAudio.volume = 0;
-              inactiveAudio.play().then(() => {
-                performCrossfade(audio, inactiveAudio);
-                
-                // Update current track after crossfade starts
-                const nextTrack = getNextTrack();
-                if (nextTrack) {
-                  const nextIndex = state.queue.findIndex(t => t.id === nextTrack.id);
-                  if (nextIndex !== -1) {
-                    dispatch({ type: 'SET_CURRENT_INDEX', payload: nextIndex });
-                  }
-                }
-              }).catch(e => {
-                console.error('Failed to start crossfade:', e);
-              });
-            }
-          }
-          
-          // Report play after 30 seconds
-          if (!hasReportedPlay.current && audio.currentTime >= 30) {
-            hasReportedPlay.current = true;
-          }
-        }
-      };
-      
-      const handleEnded = () => {
-        if (isPrimary === (activeAudioRef.current === 'primary') && !state.isCrossfading) {
-          dispatch({ type: 'SET_PLAYING', payload: false });
-          handleNext();
-        }
-      };
-      
-      const handleError = (e: Event) => {
-        if (isPrimary === (activeAudioRef.current === 'primary')) {
-          dispatch({ type: 'SET_ERROR', payload: 'Failed to load audio' });
-          dispatch({ type: 'SET_LOADING', payload: false });
-        }
-      };
+    // Check if HLS is supported
+    const hls = new Hls({
+      enableWorker: true,
+      lowLatencyMode: true,
+      backBufferLength: 30,
+    });
+    hlsRef.current = hls;
 
-      return {
-        handleLoadStart,
-        handleCanPlay,
-        handleLoadedMetadata,
-        handlePlay,
-        handlePause,
-        handleTimeUpdate,
-        handleEnded,
-        handleError
-      };
+    const handleLoadStart = () => dispatch({ type: 'SET_LOADING', payload: true });
+    const handleCanPlay = () => dispatch({ type: 'SET_LOADING', payload: false });
+    const handleLoadedMetadata = () => {
+      dispatch({ type: 'SET_TIME', payload: { currentTime: 0, duration: audio.duration } });
+      dispatch({ type: 'SET_LOADING', payload: false });
+    };
+    
+    const handlePlay = () => {
+      dispatch({ type: 'SET_PLAYING', payload: true });
+      playbackStartTime.current = new Date();
+      hasReportedPlay.current = false;
+      seekCount.current = 0;
+    };
+    
+    const handlePause = () => {
+      dispatch({ type: 'SET_PLAYING', payload: false });
+      recordPlaybackEnd();
+    };
+    
+    const handleTimeUpdate = () => {
+      dispatch({ 
+        type: 'SET_TIME', 
+        payload: { currentTime: audio.currentTime, duration: audio.duration } 
+      });
+      
+      // Report play after 30 seconds
+      if (!hasReportedPlay.current && audio.currentTime >= 30 && state.currentTrack) {
+        hasReportedPlay.current = true;
+        recordPlay(state.currentTrack);
+      }
+    };
+    
+    const handleEnded = () => {
+      dispatch({ type: 'SET_PLAYING', payload: false });
+      if (state.currentTrack) {
+        recordPlaybackEnd(true);
+      }
+      handleNext();
+    };
+    
+    const handleError = (e: Event) => {
+      dispatch({ type: 'SET_ERROR', payload: 'Failed to load audio' });
+      dispatch({ type: 'SET_LOADING', payload: false });
     };
 
-    // Attach event listeners
-    const primaryHandlers = createEventHandlers(primaryAudio, true);
-    const secondaryHandlers = createEventHandlers(secondaryAudio, false);
+    audio.addEventListener('canplay', handleCanPlay);
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('pause', handlePause);
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('error', handleError);
 
-    Object.entries(primaryHandlers).forEach(([event, handler]) => {
-      const eventName = event.replace('handle', '').toLowerCase();
-      primaryAudio.addEventListener(eventName, handler);
+    // HLS event listeners
+    hls.on(Hls.Events.MEDIA_ATTACHED, () => {
+      console.log('HLS media attached');
     });
 
-    Object.entries(secondaryHandlers).forEach(([event, handler]) => {
-      const eventName = event.replace('handle', '').toLowerCase();
-      secondaryAudio.addEventListener(eventName, handler);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      console.log('HLS manifest parsed');
+      dispatch({ type: 'SET_LOADING', payload: false });
     });
+
+    hls.on(Hls.Events.ERROR, (event, data) => {
+      console.error('HLS error:', data);
+      if (data.fatal) {
+        switch (data.type) {
+          case Hls.ErrorTypes.NETWORK_ERROR:
+            hls.startLoad();
+            break;
+          case Hls.ErrorTypes.MEDIA_ERROR:
+            hls.recoverMediaError();
+            break;
+          default:
+            dispatch({ type: 'SET_ERROR', payload: 'Failed to load HLS stream' });
+            break;
+        }
+      }
+    });
+
+    // Attach HLS to audio element
+    hls.attachMedia(audio);
 
     return () => {
-      // Cleanup
-      Object.entries(primaryHandlers).forEach(([event, handler]) => {
-        const eventName = event.replace('handle', '').toLowerCase();
-        primaryAudio.removeEventListener(eventName, handler);
-      });
-
-      Object.entries(secondaryHandlers).forEach(([event, handler]) => {
-        const eventName = event.replace('handle', '').toLowerCase();
-        secondaryAudio.removeEventListener(eventName, handler);
-      });
+      audio.removeEventListener('canplay', handleCanPlay);
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('error', handleError);
       
-      if (crossfadeTimeoutRef.current) {
-        clearTimeout(crossfadeTimeoutRef.current);
-      }
-      if (crossfadeIntervalRef.current) {
-        clearInterval(crossfadeIntervalRef.current);
-      }
-      
-      if (primaryHls) {
-        primaryHls.destroy();
-      }
-      if (secondaryHls) {
-        secondaryHls.destroy();
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
       }
     };
-  }, [state.crossfadeDuration, state.isCrossfading, preloadNextTrack, performCrossfade, getInactiveAudio, getNextTrack, state.queue]);
+  }, []);
+
+  // Analytics functions
+  const recordPlaybackEnd = useCallback((completed = false) => {
+    if (!playbackStartTime.current || !state.currentTrack) return;
+    
+    const endTime = new Date();
+    const duration = (endTime.getTime() - playbackStartTime.current.getTime()) / 1000;
+    
+    const analytics: PlaybackAnalytics = {
+      trackId: state.currentTrack.id,
+      startTime: playbackStartTime.current,
+      endTime,
+      duration,
+      completed: duration >= 30 || completed,
+      skipped: !completed && duration < 30,
+      seekCount: seekCount.current,
+      source: 'playlist',
+    };
+    
+    playbackAnalytics.current.push(analytics);
+    console.log('Analytics recorded:', analytics);
+  }, [state.currentTrack]);
+
+  const recordPlay = useCallback((track: Track) => {
+    console.log('Play recorded for track:', track.title);
+  }, []);
+
+  const recordInteraction = useCallback((track: Track, action: UserInteraction['action'], context?: string) => {
+    const interaction: UserInteraction = {
+      trackId: track.id,
+      action,
+      timestamp: new Date(),
+      context,
+    };
+    
+    userInteractions.current.push(interaction);
+    console.log('User interaction recorded:', interaction);
+  }, []);
 
   // Load HLS stream
-  const loadHlsStream = useCallback((url: string, autoPlay = true) => {
-    const { audio, hls } = getCurrentAudio();
-    if (!audio) return;
+  const loadHlsStream = useCallback((url: string) => {
+    if (!hlsRef.current || !audioRef.current) return;
 
     dispatch({ type: 'SET_LOADING', payload: true });
-    dispatch({ type: 'SET_ERROR', payload: null });
     
-    if (hls && Hls.isSupported()) {
-      // Destroy previous instance if exists
-      if (hls) hls.destroy();
-      
-      // Create new HLS instance with CORS config
-      const newHls = new Hls({
-        enableWorker: true,
-        lowLatencyMode: true,
-        xhrSetup: function(xhr) {
-          xhr.withCredentials = false; // Set to true if you need cookies
-          // No need to set headers here - they should come from server
-        }
+    if (Hls.isSupported()) {
+      hlsRef.current.loadSource(url);
+      hlsRef.current.on(Hls.Events.MANIFEST_PARSED, () => {
+        audioRef.current?.play().catch(e => {
+          dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' });
+        });
       });
-      
-      // Update the ref
-      if (activeAudioRef.current === 'primary') {
-        primaryHlsRef.current = newHls;
-      } else {
-        secondaryHlsRef.current = newHls;
-      }
-      
-      newHls.attachMedia(audio);
-      newHls.loadSource(url);
-      
-      newHls.on(Hls.Events.MANIFEST_PARSED, () => {
-        if (autoPlay) {
-          audio.play().catch(e => {
-            console.error('Autoplay failed:', e);
-            dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' });
-          });
-        }
+    } else if (audioRef.current.canPlayType('application/vnd.apple.mpegurl')) {
+      // Fallback for Safari
+      audioRef.current.src = url;
+      audioRef.current.addEventListener('loadedmetadata', () => {
+        audioRef.current?.play().catch(e => {
+          dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' });
+        });
       });
-      
-      newHls.on(Hls.Events.ERROR, (event, data) => {
-        if (data.fatal) {
-          console.error('HLS Error:', data);
-          dispatch({ type: 'SET_ERROR', payload: 'Failed to load stream' });
-        }
-      });
-    } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
-      // For Safari
-      audio.crossOrigin = 'anonymous';
-      audio.src = url;
-      audio.load();
-      
-      const playPromise = autoPlay ? audio.play().catch(e => {
-        console.error('Autoplay failed:', e);
-        dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' });
-      }) : Promise.resolve();
     } else {
-      // Fallback
-      audio.crossOrigin = 'anonymous';
-      audio.src = url;
-      audio.load();
-      
-      const playPromise = autoPlay ? audio.play().catch(e => {
-        console.error('Autoplay failed:', e);
-        dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' });
-      }) : Promise.resolve();
+      dispatch({ type: 'SET_ERROR', payload: 'HLS is not supported in this browser' });
     }
-}, [getCurrentAudio]);
+  }, []);
 
   // Playback controls
   const play = useCallback(async (track?: Track) => {
-    const { audio } = getCurrentAudio();
-    if (!audio) return;
+    if (!audioRef.current || !hlsRef.current) return;
     
     try {
       if (track && track.id !== state.currentTrack?.id) {
+        loadHlsStream(track.url);
         dispatch({ type: 'SET_CURRENT_TRACK', payload: track });
-        const trackIndex = state.queue.findIndex(t => t.id === track.id);
-        if (trackIndex !== -1) {
-          dispatch({ type: 'SET_CURRENT_INDEX', payload: trackIndex });
-        }
-        loadHlsStream(track.url, true);
-      } else if (audio.paused) {
-        await audio.play();
+      } else if (audioRef.current.paused) {
+        await audioRef.current.play();
       }
     } catch (error) {
-      console.error('Play error:', error);
       dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' });
     }
-  }, [state.currentTrack, state.queue, loadHlsStream, getCurrentAudio]);
+  }, [state.currentTrack, loadHlsStream]);
 
   const pause = useCallback(() => {
-    const { audio } = getCurrentAudio();
-    if (audio) {
-      audio.pause();
+    if (audioRef.current) {
+      audioRef.current.pause();
     }
-  }, [getCurrentAudio]);
+  }, []);
 
   const togglePlay = useCallback(() => {
     if (state.isPlaying) {
@@ -600,19 +315,26 @@ export function AudioProvider({ children }: AudioProviderProps) {
   const handleNext = useCallback(() => {
     if (state.queue.length === 0) return;
     
-    const nextTrack = getNextTrack();
-    if (!nextTrack) return;
+    let nextIndex: number;
     
-    const nextIndex = state.queue.findIndex(track => track.id === nextTrack.id);
-    if (nextIndex !== -1) {
-      dispatch({ type: 'SET_CURRENT_INDEX', payload: nextIndex });
-      dispatch({ type: 'SET_CURRENT_TRACK', payload: nextTrack });
-      loadHlsStream(nextTrack.url, true);
-      
-      // Reset preloading flag
-      isPreloadingNextTrack.current = false;
+    if (state.repeatMode === 'one') {
+      nextIndex = state.currentIndex;
+    } else if (state.isShuffled) {
+      nextIndex = Math.floor(Math.random() * state.queue.length);
+    } else {
+      nextIndex = state.currentIndex + 1;
+      if (nextIndex >= state.queue.length) {
+        if (state.repeatMode === 'all') {
+          nextIndex = 0;
+        } else {
+          return; // End of queue
+        }
+      }
     }
-  }, [state.queue, getNextTrack, loadHlsStream]);
+    
+    dispatch({ type: 'SET_CURRENT_INDEX', payload: nextIndex });
+    play(state.queue[nextIndex]);
+  }, [state.queue, state.currentIndex, state.repeatMode, state.isShuffled, play]);
 
   const previous = useCallback(() => {
     if (state.queue.length === 0) return;
@@ -634,38 +356,31 @@ export function AudioProvider({ children }: AudioProviderProps) {
       }
     }
     
-    const prevTrack = state.queue[prevIndex];
-    if (prevTrack) {
-      dispatch({ type: 'SET_CURRENT_INDEX', payload: prevIndex });
-      dispatch({ type: 'SET_CURRENT_TRACK', payload: prevTrack });
-      loadHlsStream(prevTrack.url, true);
-    }
-  }, [state.queue, state.currentIndex, state.repeatMode, state.isShuffled, loadHlsStream]);
+    dispatch({ type: 'SET_CURRENT_INDEX', payload: prevIndex });
+    play(state.queue[prevIndex]);
+  }, [state.queue, state.currentIndex, state.repeatMode, state.isShuffled, play]);
 
   const seek = useCallback((time: number) => {
-    const { audio } = getCurrentAudio();
-    if (audio) {
-      audio.currentTime = time;
+    if (audioRef.current) {
+      audioRef.current.currentTime = time;
       seekCount.current += 1;
     }
-  }, [getCurrentAudio]);
+  }, []);
 
   const setVolume = useCallback((volume: number) => {
-    const { audio } = getCurrentAudio();
-    if (audio) {
-      audio.volume = volume;
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
       dispatch({ type: 'SET_VOLUME', payload: volume });
     }
-  }, [getCurrentAudio]);
+  }, []);
 
   const toggleMute = useCallback(() => {
-    const { audio } = getCurrentAudio();
-    if (audio) {
+    if (audioRef.current) {
       const newMuted = !state.isMuted;
-      audio.muted = newMuted;
+      audioRef.current.muted = newMuted;
       dispatch({ type: 'SET_MUTED', payload: newMuted });
     }
-  }, [state.isMuted, getCurrentAudio]);
+  }, [state.isMuted]);
 
   // Queue management
   const setQueue = useCallback((tracks: Track[], startIndex = 0) => {
@@ -693,37 +408,31 @@ export function AudioProvider({ children }: AudioProviderProps) {
     dispatch({ type: 'SET_REPEAT', payload: mode });
   }, []);
 
-  // Crossfade settings
-  const setCrossfadeDuration = useCallback((duration: number) => {
-    dispatch({ type: 'SET_CROSSFADE_DURATION', payload: Math.max(0, Math.min(duration, 30)) });
-  }, []);
-
-  // Analytics and interaction tracking
+  // Analytics actions
   const trackPlay = useCallback((track: Track, source: string, sourceId?: string) => {
-    console.log('Track play:', track.title, 'Source:', source);
-  }, []);
+    recordInteraction(track, 'like', `${source}:${sourceId}`);
+  }, [recordInteraction]);
 
   const trackSkip = useCallback((track: Track) => {
+    recordPlaybackEnd();
     console.log('Track skipped:', track.title);
-  }, []);
+  }, [recordPlaybackEnd]);
 
   const trackComplete = useCallback((track: Track) => {
     console.log('Track completed:', track.title);
   }, []);
 
   const trackLike = useCallback((track: Track) => {
-    dispatch({ type: 'UPDATE_TRACK_LIKE', payload: { id: track.id, isLiked: true } });
-    console.log('Track liked:', track.title);
-  }, []);
+    recordInteraction(track, 'like');
+  }, [recordInteraction]);
 
   const trackUnlike = useCallback((track: Track) => {
-    dispatch({ type: 'UPDATE_TRACK_LIKE', payload: { id: track.id, isLiked: false } });
-    console.log('Track unliked:', track.title);
-  }, []);
+    recordInteraction(track, 'unlike');
+  }, [recordInteraction]);
 
   const trackReport = useCallback((track: Track, reason: string) => {
-    console.log('Track reported:', track.title, 'Reason:', reason);
-  }, []);
+    recordInteraction(track, 'report', reason);
+  }, [recordInteraction]);
 
   const contextValue: AudioContextType = {
     ...state,
@@ -747,8 +456,6 @@ export function AudioProvider({ children }: AudioProviderProps) {
     trackLike,
     trackUnlike,
     trackReport,
-    crossfadeDuration: state.crossfadeDuration,
-    setCrossfadeDuration,
   };
 
   return (
