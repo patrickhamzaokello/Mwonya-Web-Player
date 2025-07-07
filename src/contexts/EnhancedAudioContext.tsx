@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import Hls from 'hls.js';
 import { Track, AudioState, PlaybackAnalytics, UserInteraction, AudioActions } from '@/types/audio';
 
-interface AudioContextType extends AudioState, AudioActions {}
+interface AudioContextType extends AudioState, AudioActions { }
 
 const AudioContext = createContext<AudioContextType | null>(null);
 
@@ -48,15 +48,15 @@ function audioReducer(state: AudioState, action: AudioActionType): AudioState {
     case 'SET_CURRENT_TRACK':
       return { ...state, currentTrack: action.payload };
     case 'SET_QUEUE':
-      return { 
-        ...state, 
-        queue: action.payload.tracks, 
+      return {
+        ...state,
+        queue: action.payload.tracks,
         currentIndex: action.payload.index,
         currentTrack: action.payload.tracks[action.payload.index] || null
       };
     case 'SET_CURRENT_INDEX':
-      return { 
-        ...state, 
+      return {
+        ...state,
         currentIndex: action.payload,
         currentTrack: state.queue[action.payload] || null
       };
@@ -79,9 +79,9 @@ function audioReducer(state: AudioState, action: AudioActionType): AudioState {
     case 'REMOVE_FROM_QUEUE':
       const newQueue = state.queue.filter((_, index) => index !== action.payload);
       const newIndex = action.payload < state.currentIndex ? state.currentIndex - 1 : state.currentIndex;
-      return { 
-        ...state, 
-        queue: newQueue, 
+      return {
+        ...state,
+        queue: newQueue,
         currentIndex: Math.max(0, Math.min(newIndex, newQueue.length - 1)),
         currentTrack: newQueue[Math.max(0, Math.min(newIndex, newQueue.length - 1))] || null
       };
@@ -110,7 +110,7 @@ export function AudioProvider({ children }: AudioProviderProps) {
   useEffect(() => {
     const audio = new Audio();
     audioRef.current = audio;
-    
+
     // Check if HLS is supported
     const hls = new Hls({
       enableWorker: true,
@@ -125,40 +125,44 @@ export function AudioProvider({ children }: AudioProviderProps) {
       dispatch({ type: 'SET_TIME', payload: { currentTime: 0, duration: audio.duration } });
       dispatch({ type: 'SET_LOADING', payload: false });
     };
-    
+
     const handlePlay = () => {
       dispatch({ type: 'SET_PLAYING', payload: true });
       playbackStartTime.current = new Date();
       hasReportedPlay.current = false;
       seekCount.current = 0;
     };
-    
+
     const handlePause = () => {
       dispatch({ type: 'SET_PLAYING', payload: false });
       recordPlaybackEnd();
     };
-    
+
     const handleTimeUpdate = () => {
-      dispatch({ 
-        type: 'SET_TIME', 
-        payload: { currentTime: audio.currentTime, duration: audio.duration } 
+      dispatch({
+        type: 'SET_TIME',
+        payload: { currentTime: audio.currentTime, duration: audio.duration }
       });
-      
+
       // Report play after 30 seconds
       if (!hasReportedPlay.current && audio.currentTime >= 30 && state.currentTrack) {
         hasReportedPlay.current = true;
         recordPlay(state.currentTrack);
       }
     };
-    
+
     const handleEnded = () => {
       dispatch({ type: 'SET_PLAYING', payload: false });
       if (state.currentTrack) {
         recordPlaybackEnd(true);
       }
-      handleNext();
+
+      // Add a small delay to ensure state is updated before calling next
+      setTimeout(() => {
+        handleNext();
+      }, 100);
     };
-    
+
     const handleError = (e: Event) => {
       dispatch({ type: 'SET_ERROR', payload: 'Failed to load audio' });
       dispatch({ type: 'SET_LOADING', payload: false });
@@ -210,7 +214,7 @@ export function AudioProvider({ children }: AudioProviderProps) {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
-      
+
       if (hlsRef.current) {
         hlsRef.current.destroy();
         hlsRef.current = null;
@@ -221,10 +225,10 @@ export function AudioProvider({ children }: AudioProviderProps) {
   // Analytics functions
   const recordPlaybackEnd = useCallback((completed = false) => {
     if (!playbackStartTime.current || !state.currentTrack) return;
-    
+
     const endTime = new Date();
     const duration = (endTime.getTime() - playbackStartTime.current.getTime()) / 1000;
-    
+
     const analytics: PlaybackAnalytics = {
       trackId: state.currentTrack.id,
       startTime: playbackStartTime.current,
@@ -235,7 +239,7 @@ export function AudioProvider({ children }: AudioProviderProps) {
       seekCount: seekCount.current,
       source: 'playlist',
     };
-    
+
     playbackAnalytics.current.push(analytics);
     console.log('Analytics recorded:', analytics);
   }, [state.currentTrack]);
@@ -251,32 +255,74 @@ export function AudioProvider({ children }: AudioProviderProps) {
       timestamp: new Date(),
       context,
     };
-    
+
     userInteractions.current.push(interaction);
     console.log('User interaction recorded:', interaction);
   }, []);
 
   // Load HLS stream
-  const loadHlsStream = useCallback((url: string) => {
+  const loadHlsStream = useCallback((url: string, autoPlay = true) => {
     if (!hlsRef.current || !audioRef.current) return;
 
     dispatch({ type: 'SET_LOADING', payload: true });
-    
+    dispatch({ type: 'SET_ERROR', payload: null });
+
+    // Clean up previous stream
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+      hlsRef.current = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+        backBufferLength: 30,
+      });
+      hlsRef.current.attachMedia(audioRef.current);
+    }
+
     if (Hls.isSupported()) {
       hlsRef.current.loadSource(url);
+
+      // Remove old listeners to prevent duplicate handlers
+      hlsRef.current.off(Hls.Events.MANIFEST_PARSED);
+      hlsRef.current.off(Hls.Events.ERROR);
+
       hlsRef.current.on(Hls.Events.MANIFEST_PARSED, () => {
-        audioRef.current?.play().catch(e => {
-          dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' });
-        });
+        if (autoPlay) {
+          audioRef.current?.play().catch(e => {
+            console.error('Autoplay failed:', e);
+            dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' });
+          });
+        }
+      });
+
+      hlsRef.current.on(Hls.Events.ERROR, (event, data) => {
+        console.error('HLS error:', data);
+        if (data.fatal) {
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              hlsRef.current?.startLoad();
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              hlsRef.current?.recoverMediaError();
+              break;
+            default:
+              dispatch({ type: 'SET_ERROR', payload: 'Failed to load HLS stream' });
+              break;
+          }
+        }
       });
     } else if (audioRef.current.canPlayType('application/vnd.apple.mpegurl')) {
       // Fallback for Safari
       audioRef.current.src = url;
-      audioRef.current.addEventListener('loadedmetadata', () => {
-        audioRef.current?.play().catch(e => {
-          dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' });
-        });
-      });
+      const handleLoadedMetadata = () => {
+        if (autoPlay) {
+          audioRef.current?.play().catch(e => {
+            console.error('Autoplay failed:', e);
+            dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' });
+          });
+        }
+        audioRef.current?.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      };
+      audioRef.current.addEventListener('loadedmetadata', handleLoadedMetadata);
     } else {
       dispatch({ type: 'SET_ERROR', payload: 'HLS is not supported in this browser' });
     }
@@ -285,15 +331,18 @@ export function AudioProvider({ children }: AudioProviderProps) {
   // Playback controls
   const play = useCallback(async (track?: Track) => {
     if (!audioRef.current || !hlsRef.current) return;
-    
+
     try {
       if (track && track.id !== state.currentTrack?.id) {
-        loadHlsStream(track.url);
+        // New track - load HLS stream
         dispatch({ type: 'SET_CURRENT_TRACK', payload: track });
+        loadHlsStream(track.url, true);
       } else if (audioRef.current.paused) {
+        // Same track - just resume
         await audioRef.current.play();
       }
     } catch (error) {
+      console.error('Play error:', error);
       dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' });
     }
   }, [state.currentTrack, loadHlsStream]);
@@ -314,9 +363,9 @@ export function AudioProvider({ children }: AudioProviderProps) {
 
   const handleNext = useCallback(() => {
     if (state.queue.length === 0) return;
-    
+
     let nextIndex: number;
-    
+
     if (state.repeatMode === 'one') {
       nextIndex = state.currentIndex;
     } else if (state.isShuffled) {
@@ -331,16 +380,22 @@ export function AudioProvider({ children }: AudioProviderProps) {
         }
       }
     }
-    
+
+    const nextTrack = state.queue[nextIndex];
     dispatch({ type: 'SET_CURRENT_INDEX', payload: nextIndex });
-    play(state.queue[nextIndex]);
-  }, [state.queue, state.currentIndex, state.repeatMode, state.isShuffled, play]);
+    dispatch({ type: 'SET_CURRENT_TRACK', payload: nextTrack });
+
+    // Force load and play the next HLS stream
+    if (nextTrack) {
+      loadHlsStream(nextTrack.url);
+    }
+  }, [state.queue, state.currentIndex, state.repeatMode, state.isShuffled, loadHlsStream]);
 
   const previous = useCallback(() => {
     if (state.queue.length === 0) return;
-    
+
     let prevIndex: number;
-    
+
     if (state.repeatMode === 'one') {
       prevIndex = state.currentIndex;
     } else if (state.isShuffled) {
@@ -355,7 +410,7 @@ export function AudioProvider({ children }: AudioProviderProps) {
         }
       }
     }
-    
+
     dispatch({ type: 'SET_CURRENT_INDEX', payload: prevIndex });
     play(state.queue[prevIndex]);
   }, [state.queue, state.currentIndex, state.repeatMode, state.isShuffled, play]);
