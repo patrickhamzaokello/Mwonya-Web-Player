@@ -3,17 +3,18 @@
 import React, { createContext, useContext, useReducer, useRef, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import Hls from 'hls.js';
+import { Track, PlaybackAnalytics, UserInteraction } from '@/types/audio';
 
 // Define types
-export interface Track {
-  id: string;
-  title: string;
-  artist: string;
-  artwork?: string;
-  url: string;
-  duration?: number;
-  isLiked?: boolean;
-}
+// export interface Track {
+//   id: string;
+//   title: string;
+//   artist: string;
+//   artwork?: string;
+//   url: string;
+//   duration?: number;
+//   isLiked?: boolean;
+// }
 
 export interface AudioState {
   isPlaying: boolean;
