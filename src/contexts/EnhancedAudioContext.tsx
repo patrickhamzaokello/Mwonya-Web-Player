@@ -5,16 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import Hls from 'hls.js';
 import { Track, PlaybackAnalytics, UserInteraction } from '@/types/audio';
 
-// Define types
-// export interface Track {
-//   id: string;
-//   title: string;
-//   artist: string;
-//   artwork?: string;
-//   url: string;
-//   duration?: number;
-//   isLiked?: boolean;
-// }
+
 
 export interface AudioState {
   isPlaying: boolean;
@@ -508,6 +499,12 @@ export function AudioProvider({ children }: AudioProviderProps) {
     dispatch({ type: 'SET_ERROR', payload: null });
     
     if (hls && Hls.isSupported()) {
+      // Configure HLS with CORS settings
+      hls.config.xhrSetup = function(xhr: XMLHttpRequest, url: string) {
+        xhr.withCredentials = true; // If you need credentials
+        xhr.setRequestHeader('Access-Control-Allow-Origin', '*');
+      };
+      
       hls.loadSource(url);
       
       const handleManifestParsed = () => {
@@ -522,6 +519,8 @@ export function AudioProvider({ children }: AudioProviderProps) {
       
       hls.on(Hls.Events.MANIFEST_PARSED, handleManifestParsed);
     } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
+      // For Safari/iOS which uses native HLS
+      audio.crossOrigin = 'anonymous'; // Add CORS attribute
       audio.src = url;
       const handleLoadedMetadata = () => {
         if (autoPlay) {
@@ -534,6 +533,8 @@ export function AudioProvider({ children }: AudioProviderProps) {
       };
       audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     } else {
+      // Fallback for other browsers
+      audio.crossOrigin = 'anonymous'; // Add CORS attribute
       audio.src = url;
       if (autoPlay) {
         audio.play().catch(e => {
@@ -542,7 +543,7 @@ export function AudioProvider({ children }: AudioProviderProps) {
         });
       }
     }
-  }, [getCurrentAudio]);
+}, [getCurrentAudio]);
 
   // Playback controls
   const play = useCallback(async (track?: Track) => {
