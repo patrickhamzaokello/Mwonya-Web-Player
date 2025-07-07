@@ -499,49 +499,64 @@ export function AudioProvider({ children }: AudioProviderProps) {
     dispatch({ type: 'SET_ERROR', payload: null });
     
     if (hls && Hls.isSupported()) {
-      // Configure HLS with CORS settings
-      hls.config.xhrSetup = function(xhr: XMLHttpRequest, url: string) {
-        xhr.withCredentials = true; // If you need credentials
-        xhr.setRequestHeader('Access-Control-Allow-Origin', '*');
-      };
+      // Destroy previous instance if exists
+      if (hls) hls.destroy();
       
-      hls.loadSource(url);
-      
-      const handleManifestParsed = () => {
-        if (autoPlay) {
-          audio.play().catch(e => {
-            console.error('Autoplay failed:', e);
-            dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' });
-          });
+      // Create new HLS instance with CORS config
+      const newHls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+        xhrSetup: function(xhr) {
+          xhr.withCredentials = false; // Set to true if you need cookies
+          // No need to set headers here - they should come from server
         }
-        hls.off(Hls.Events.MANIFEST_PARSED, handleManifestParsed);
-      };
+      });
       
-      hls.on(Hls.Events.MANIFEST_PARSED, handleManifestParsed);
-    } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
-      // For Safari/iOS which uses native HLS
-      audio.crossOrigin = 'anonymous'; // Add CORS attribute
-      audio.src = url;
-      const handleLoadedMetadata = () => {
-        if (autoPlay) {
-          audio.play().catch(e => {
-            console.error('Autoplay failed:', e);
-            dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' });
-          });
-        }
-        audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
-      };
-      audio.addEventListener('loadedmetadata', handleLoadedMetadata);
-    } else {
-      // Fallback for other browsers
-      audio.crossOrigin = 'anonymous'; // Add CORS attribute
-      audio.src = url;
-      if (autoPlay) {
-        audio.play().catch(e => {
-          console.error('Autoplay failed:', e);
-          dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' });
-        });
+      // Update the ref
+      if (activeAudioRef.current === 'primary') {
+        primaryHlsRef.current = newHls;
+      } else {
+        secondaryHlsRef.current = newHls;
       }
+      
+      newHls.attachMedia(audio);
+      newHls.loadSource(url);
+      
+      newHls.on(Hls.Events.MANIFEST_PARSED, () => {
+        if (autoPlay) {
+          audio.play().catch(e => {
+            console.error('Autoplay failed:', e);
+            dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' });
+          });
+        }
+      });
+      
+      newHls.on(Hls.Events.ERROR, (event, data) => {
+        if (data.fatal) {
+          console.error('HLS Error:', data);
+          dispatch({ type: 'SET_ERROR', payload: 'Failed to load stream' });
+        }
+      });
+    } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
+      // For Safari
+      audio.crossOrigin = 'anonymous';
+      audio.src = url;
+      audio.load();
+      
+      const playPromise = autoPlay ? audio.play().catch(e => {
+        console.error('Autoplay failed:', e);
+        dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' });
+      }) : Promise.resolve();
+    } else {
+      // Fallback
+      audio.crossOrigin = 'anonymous';
+      audio.src = url;
+      audio.load();
+      
+      const playPromise = autoPlay ? audio.play().catch(e => {
+        console.error('Autoplay failed:', e);
+        dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' });
+      }) : Promise.resolve();
     }
 }, [getCurrentAudio]);
 
