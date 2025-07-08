@@ -145,9 +145,9 @@ export function NewReleasesSection({
                   src={release.artworkPath || "/placeholder.svg"}
                   alt={release.title}
                   width={300}
-                  height={200}
+                  height={300}
                   loader={customUrlImageLoader}
-                  className="w-full h-48 object-cover transition-all duration-300 group-hover:scale-105"
+                  className="w-full  object-cover transition-all duration-300 group-hover:scale-105"
                 />
 
                 {/* Play Button Overlay */}
@@ -191,25 +191,11 @@ export function NewReleasesSection({
             {/* Content */}
             <div className="p-4">
               {/* Release Info */}
-              <div className="mb-4">
+              <div >
                 <h3 className="font-bold text-lg text-foreground mb-1 truncate">{release.title}</h3>
-                <p className="text-sm text-muted-foreground">{release.tag}</p>
+                <p className="text-sm text-foreground hover: text-underline">{release.artist} . <span className="text-muted-foreground">{release.tag}</span></p>
               </div>
-
-             
-
-              {/* Action Buttons - Compact */}
-              <div className="flex items-center gap-2">
-                <Button size="sm" className="flex-1 h-8 text-xs font-medium">
-                  Details
-                </Button>
-                <Button size="icon" variant="outline" className="h-8 w-8 bg-transparent">
-                  <Heart className="w-3 h-3" />
-                </Button>
-                <Button size="icon" variant="outline" className="h-8 w-8 bg-transparent">
-                  <Share className="w-3 h-3" />
-                </Button>
-              </div>
+            
             </div>
           </div>
         ))}

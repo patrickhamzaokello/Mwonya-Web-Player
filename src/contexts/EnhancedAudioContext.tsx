@@ -110,7 +110,7 @@ export function AudioProvider({ children }: AudioProviderProps) {
   useEffect(() => {
     const audio = new Audio();
     audioRef.current = audio;
-    
+    audio.crossOrigin = 'anonymous'; 
     // Check if HLS is supported
     const hls = new Hls({
       enableWorker: true,
@@ -259,18 +259,36 @@ export function AudioProvider({ children }: AudioProviderProps) {
   // Load HLS stream
   const loadHlsStream = useCallback((url: string) => {
     if (!hlsRef.current || !audioRef.current) return;
-
+  
     dispatch({ type: 'SET_LOADING', payload: true });
     
     if (Hls.isSupported()) {
-      hlsRef.current.loadSource(url);
-      hlsRef.current.on(Hls.Events.MANIFEST_PARSED, () => {
+      const hls = hlsRef.current;
+      
+      // Configure HLS.js with CORS settings
+      hls.config.xhrSetup = function(xhr: XMLHttpRequest, url: string) {
+        xhr.withCredentials = false; // Don't send cookies
+        xhr.setRequestHeader('Accept', '*/*');
+      };
+  
+      hls.loadSource(url);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
         audioRef.current?.play().catch(e => {
+          console.error('Playback error:', e);
           dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' });
         });
       });
+      
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+          console.error('Network error:', data);
+          dispatch({ type: 'SET_ERROR', payload: 'Network error loading stream' });
+        }
+      });
+      
     } else if (audioRef.current.canPlayType('application/vnd.apple.mpegurl')) {
-      // Fallback for Safari
+      // Safari native HLS support
+      audioRef.current.crossOrigin = 'anonymous';
       audioRef.current.src = url;
       audioRef.current.addEventListener('loadedmetadata', () => {
         audioRef.current?.play().catch(e => {

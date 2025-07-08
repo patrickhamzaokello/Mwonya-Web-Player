@@ -195,7 +195,9 @@ export default function FeaturedAlbumsSection({ albums, heading }: FeaturedAlbum
                     {album.title}
                   </h3>
                 </Link>
+                <Link href={`/library/artists/${album.artist}`}>
                 <p className="text-sm text-muted-foreground truncate">{album.artist}</p>
+                </Link>
               </div>
             </div>
           ))}
