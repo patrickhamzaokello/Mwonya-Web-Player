@@ -110,7 +110,7 @@ export function AudioProvider({ children }: AudioProviderProps) {
   useEffect(() => {
     const audio = new Audio();
     audioRef.current = audio;
-    audio.crossOrigin = 'anonymous'; 
+    
     // Check if HLS is supported
     const hls = new Hls({
       enableWorker: true,
@@ -265,12 +265,6 @@ export function AudioProvider({ children }: AudioProviderProps) {
     if (Hls.isSupported()) {
       const hls = hlsRef.current;
       
-      // Configure HLS.js with CORS settings
-      hls.config.xhrSetup = function(xhr: XMLHttpRequest, url: string) {
-        xhr.withCredentials = false; // Don't send cookies
-        xhr.setRequestHeader('Accept', '*/*');
-      };
-  
       hls.loadSource(url);
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         audioRef.current?.play().catch(e => {
@@ -288,7 +282,6 @@ export function AudioProvider({ children }: AudioProviderProps) {
       
     } else if (audioRef.current.canPlayType('application/vnd.apple.mpegurl')) {
       // Safari native HLS support
-      audioRef.current.crossOrigin = 'anonymous';
       audioRef.current.src = url;
       audioRef.current.addEventListener('loadedmetadata', () => {
         audioRef.current?.play().catch(e => {
