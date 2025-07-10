@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useRef, useState, useEffect } from "react";
 import type { Album, Playlist } from "@/lib/home_feed_types";
 import { useAudio } from "@/contexts/EnhancedAudioContext";
-import { fetchAlbumTracks } from "@/actions/album_tracks_data"; // You'll need to create this action
+import { fetchPlaylistTracks } from "@/actions/playlist_tracks_data"; // You'll need to create this action
 import Link from "next/link";
 import { customUrlImageLoader } from "@/lib/utils";
 
@@ -35,12 +35,12 @@ export default function FeaturedPlaylistsSection({
     }
   };
 
-  const handlePlayAlbum = async (albumId: string) => {
+  const handlePlayAlbum = async (playlistID: string) => {
     try {
-      setLoadingAlbum(albumId);
+      setLoadingAlbum(playlistID);
 
       // Fetch album tracks using a server action instead of a hook
-      const tracks = await fetchAlbumTracks(albumId);
+      const tracks = await fetchPlaylistTracks(playlistID);
 
       if (tracks && tracks.length > 0) {
         const updatedTracks = tracks.map((track) => ({
