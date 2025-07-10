@@ -1,9 +1,22 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useReducer, useRef, useEffect, useCallback } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-import Hls from 'hls.js';
-import { Track, AudioState, PlaybackAnalytics, UserInteraction, AudioActions } from '@/types/audio';
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useRef,
+  useEffect,
+  useCallback,
+} from "react";
+import { v4 as uuidv4 } from "uuid";
+import Hls from "hls.js";
+import {
+  Track,
+  AudioState,
+  PlaybackAnalytics,
+  UserInteraction,
+  AudioActions,
+} from "@/types/audio";
 
 interface AudioContextType extends AudioState, AudioActions {}
 
@@ -11,20 +24,20 @@ const AudioContext = createContext<AudioContextType | null>(null);
 
 // Audio reducer for state management
 type AudioActionType =
-  | { type: 'SET_PLAYING'; payload: boolean }
-  | { type: 'SET_CURRENT_TRACK'; payload: Track | null }
-  | { type: 'SET_QUEUE'; payload: { tracks: Track[]; index: number } }
-  | { type: 'SET_CURRENT_INDEX'; payload: number }
-  | { type: 'SET_VOLUME'; payload: number }
-  | { type: 'SET_MUTED'; payload: boolean }
-  | { type: 'SET_SHUFFLE'; payload: boolean }
-  | { type: 'SET_REPEAT'; payload: 'off' | 'all' | 'one' }
-  | { type: 'SET_TIME'; payload: { currentTime: number; duration: number } }
-  | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'SET_ERROR'; payload: string | null }
-  | { type: 'ADD_TO_QUEUE'; payload: Track }
-  | { type: 'REMOVE_FROM_QUEUE'; payload: number }
-  | { type: 'CLEAR_QUEUE' };
+  | { type: "SET_PLAYING"; payload: boolean }
+  | { type: "SET_CURRENT_TRACK"; payload: Track | null }
+  | { type: "SET_QUEUE"; payload: { tracks: Track[]; index: number } }
+  | { type: "SET_CURRENT_INDEX"; payload: number }
+  | { type: "SET_VOLUME"; payload: number }
+  | { type: "SET_MUTED"; payload: boolean }
+  | { type: "SET_SHUFFLE"; payload: boolean }
+  | { type: "SET_REPEAT"; payload: "off" | "all" | "one" }
+  | { type: "SET_TIME"; payload: { currentTime: number; duration: number } }
+  | { type: "SET_LOADING"; payload: boolean }
+  | { type: "SET_ERROR"; payload: string | null }
+  | { type: "ADD_TO_QUEUE"; payload: Track }
+  | { type: "REMOVE_FROM_QUEUE"; payload: number }
+  | { type: "CLEAR_QUEUE" };
 
 const initialState: AudioState = {
   isPlaying: false,
@@ -34,7 +47,7 @@ const initialState: AudioState = {
   volume: 1,
   isMuted: false,
   isShuffled: false,
-  repeatMode: 'off',
+  repeatMode: "off",
   currentTime: 0,
   duration: 0,
   isLoading: false,
@@ -43,49 +56,60 @@ const initialState: AudioState = {
 
 function audioReducer(state: AudioState, action: AudioActionType): AudioState {
   switch (action.type) {
-    case 'SET_PLAYING':
+    case "SET_PLAYING":
       return { ...state, isPlaying: action.payload };
-    case 'SET_CURRENT_TRACK':
+    case "SET_CURRENT_TRACK":
       return { ...state, currentTrack: action.payload };
-    case 'SET_QUEUE':
-      return { 
-        ...state, 
-        queue: action.payload.tracks, 
+    case "SET_QUEUE":
+      return {
+        ...state,
+        queue: action.payload.tracks,
         currentIndex: action.payload.index,
-        currentTrack: action.payload.tracks[action.payload.index] || null
+        currentTrack: action.payload.tracks[action.payload.index] || null,
       };
-    case 'SET_CURRENT_INDEX':
-      return { 
-        ...state, 
+    case "SET_CURRENT_INDEX":
+      return {
+        ...state,
         currentIndex: action.payload,
-        currentTrack: state.queue[action.payload] || null
+        currentTrack: state.queue[action.payload] || null,
       };
-    case 'SET_VOLUME':
+    case "SET_VOLUME":
       return { ...state, volume: action.payload };
-    case 'SET_MUTED':
+    case "SET_MUTED":
       return { ...state, isMuted: action.payload };
-    case 'SET_SHUFFLE':
+    case "SET_SHUFFLE":
       return { ...state, isShuffled: action.payload };
-    case 'SET_REPEAT':
+    case "SET_REPEAT":
       return { ...state, repeatMode: action.payload };
-    case 'SET_TIME':
-      return { ...state, currentTime: action.payload.currentTime, duration: action.payload.duration };
-    case 'SET_LOADING':
-      return { ...state, isLoading: action.payload };
-    case 'SET_ERROR':
-      return { ...state, error: action.payload };
-    case 'ADD_TO_QUEUE':
-      return { ...state, queue: [...state.queue, action.payload] };
-    case 'REMOVE_FROM_QUEUE':
-      const newQueue = state.queue.filter((_, index) => index !== action.payload);
-      const newIndex = action.payload < state.currentIndex ? state.currentIndex - 1 : state.currentIndex;
-      return { 
-        ...state, 
-        queue: newQueue, 
-        currentIndex: Math.max(0, Math.min(newIndex, newQueue.length - 1)),
-        currentTrack: newQueue[Math.max(0, Math.min(newIndex, newQueue.length - 1))] || null
+    case "SET_TIME":
+      return {
+        ...state,
+        currentTime: action.payload.currentTime,
+        duration: action.payload.duration,
       };
-    case 'CLEAR_QUEUE':
+    case "SET_LOADING":
+      return { ...state, isLoading: action.payload };
+    case "SET_ERROR":
+      return { ...state, error: action.payload };
+    case "ADD_TO_QUEUE":
+      return { ...state, queue: [...state.queue, action.payload] };
+    case "REMOVE_FROM_QUEUE":
+      const newQueue = state.queue.filter(
+        (_, index) => index !== action.payload
+      );
+      const newIndex =
+        action.payload < state.currentIndex
+          ? state.currentIndex - 1
+          : state.currentIndex;
+      return {
+        ...state,
+        queue: newQueue,
+        currentIndex: Math.max(0, Math.min(newIndex, newQueue.length - 1)),
+        currentTrack:
+          newQueue[Math.max(0, Math.min(newIndex, newQueue.length - 1))] ||
+          null,
+      };
+    case "CLEAR_QUEUE":
       return { ...state, queue: [], currentIndex: 0, currentTrack: null };
     default:
       return state;
@@ -106,11 +130,17 @@ export function AudioProvider({ children }: AudioProviderProps) {
   const hasReportedPlay = useRef<boolean>(false);
   const seekCount = useRef<number>(0);
 
+  const stateRef = useRef(state);
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
   // Initialize audio element and HLS
   useEffect(() => {
     const audio = new Audio();
     audioRef.current = audio;
-    
+
     // Check if HLS is supported
     const hls = new Hls({
       enableWorker: true,
@@ -119,71 +149,104 @@ export function AudioProvider({ children }: AudioProviderProps) {
     });
     hlsRef.current = hls;
 
-    const handleLoadStart = () => dispatch({ type: 'SET_LOADING', payload: true });
-    const handleCanPlay = () => dispatch({ type: 'SET_LOADING', payload: false });
+    const handleLoadStart = () =>
+      dispatch({ type: "SET_LOADING", payload: true });
+    const handleCanPlay = () =>
+      dispatch({ type: "SET_LOADING", payload: false });
     const handleLoadedMetadata = () => {
-      dispatch({ type: 'SET_TIME', payload: { currentTime: 0, duration: audio.duration } });
-      dispatch({ type: 'SET_LOADING', payload: false });
+      dispatch({
+        type: "SET_TIME",
+        payload: { currentTime: 0, duration: audio.duration },
+      });
+      dispatch({ type: "SET_LOADING", payload: false });
     };
-    
+
     const handlePlay = () => {
-      dispatch({ type: 'SET_PLAYING', payload: true });
+      dispatch({ type: "SET_PLAYING", payload: true });
       playbackStartTime.current = new Date();
       hasReportedPlay.current = false;
       seekCount.current = 0;
     };
-    
+
     const handlePause = () => {
-      dispatch({ type: 'SET_PLAYING', payload: false });
+      dispatch({ type: "SET_PLAYING", payload: false });
       recordPlaybackEnd();
     };
-    
+
     const handleTimeUpdate = () => {
-      dispatch({ 
-        type: 'SET_TIME', 
-        payload: { currentTime: audio.currentTime, duration: audio.duration } 
+      if (!audioRef.current) return;
+
+      dispatch({
+        type: "SET_TIME",
+        payload: {
+          currentTime: audioRef.current.currentTime,
+          duration: audioRef.current.duration,
+        },
       });
-      
+
       // Report play after 30 seconds
-      if (!hasReportedPlay.current && audio.currentTime >= 30 && state.currentTrack) {
+      if (
+        !hasReportedPlay.current &&
+        audioRef.current.currentTime >= 30 &&
+        state.currentTrack
+      ) {
         hasReportedPlay.current = true;
         recordPlay(state.currentTrack);
       }
+
+      // Fallback for detecting stream end
+      if (
+        audioRef.current.duration > 0 &&
+        audioRef.current.currentTime >= audioRef.current.duration - 0.5
+      ) {
+        // Trigger handleNext when the track is within 0.5 seconds of ending
+        dispatch({ type: "SET_PLAYING", payload: false });
+        if (state.currentTrack) {
+          recordPlaybackEnd(true);
+        }
+        handleNext();
+      }
     };
-    
+
     const handleEnded = () => {
-      dispatch({ type: 'SET_PLAYING', payload: false });
+      console.log(
+        "Track ended, current queue:",
+        state.queue,
+        "currentIndex:",
+        state.currentIndex
+      );
+      dispatch({ type: "SET_PLAYING", payload: false });
       if (state.currentTrack) {
         recordPlaybackEnd(true);
       }
       handleNext();
     };
-    
+
     const handleError = (e: Event) => {
-      dispatch({ type: 'SET_ERROR', payload: 'Failed to load audio' });
-      dispatch({ type: 'SET_LOADING', payload: false });
+      dispatch({ type: "SET_ERROR", payload: "Failed to load audio" });
+      dispatch({ type: "SET_LOADING", payload: false });
     };
 
-    audio.addEventListener('canplay', handleCanPlay);
-    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
-    audio.addEventListener('play', handlePlay);
-    audio.addEventListener('pause', handlePause);
-    audio.addEventListener('timeupdate', handleTimeUpdate);
-    audio.addEventListener('ended', handleEnded);
-    audio.addEventListener('error', handleError);
+    audio.addEventListener("canplay", handleCanPlay);
+    audio.addEventListener("loadedmetadata", handleLoadedMetadata);
+    audio.addEventListener("play", handlePlay);
+    audio.addEventListener("pause", handlePause);
+    audio.addEventListener("timeupdate", handleTimeUpdate);
+    audio.addEventListener("ended", handleEnded);
+    audio.addEventListener("error", handleError);
 
     // HLS event listeners
     hls.on(Hls.Events.MEDIA_ATTACHED, () => {
-      console.log('HLS media attached');
+      console.log("HLS media attached");
     });
 
     hls.on(Hls.Events.MANIFEST_PARSED, () => {
-      console.log('HLS manifest parsed');
-      dispatch({ type: 'SET_LOADING', payload: false });
+      console.log("HLS manifest parsed");
+      dispatch({ type: "SET_LOADING", payload: false });
     });
 
     hls.on(Hls.Events.ERROR, (event, data) => {
-      console.error('HLS error:', data);
+      console.error("HLS error:", data);
       if (data.fatal) {
         switch (data.type) {
           case Hls.ErrorTypes.NETWORK_ERROR:
@@ -193,7 +256,10 @@ export function AudioProvider({ children }: AudioProviderProps) {
             hls.recoverMediaError();
             break;
           default:
-            dispatch({ type: 'SET_ERROR', payload: 'Failed to load HLS stream' });
+            dispatch({
+              type: "SET_ERROR",
+              payload: "Failed to load HLS stream",
+            });
             break;
         }
       }
@@ -203,14 +269,14 @@ export function AudioProvider({ children }: AudioProviderProps) {
     hls.attachMedia(audio);
 
     return () => {
-      audio.removeEventListener('canplay', handleCanPlay);
-      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
-      audio.removeEventListener('play', handlePlay);
-      audio.removeEventListener('pause', handlePause);
-      audio.removeEventListener('timeupdate', handleTimeUpdate);
-      audio.removeEventListener('ended', handleEnded);
-      audio.removeEventListener('error', handleError);
-      
+      audio.removeEventListener("canplay", handleCanPlay);
+      audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      audio.removeEventListener("play", handlePlay);
+      audio.removeEventListener("pause", handlePause);
+      audio.removeEventListener("timeupdate", handleTimeUpdate);
+      audio.removeEventListener("ended", handleEnded);
+      audio.removeEventListener("error", handleError);
+
       if (hlsRef.current) {
         hlsRef.current.destroy();
         hlsRef.current = null;
@@ -219,95 +285,127 @@ export function AudioProvider({ children }: AudioProviderProps) {
   }, []);
 
   // Analytics functions
-  const recordPlaybackEnd = useCallback((completed = false) => {
-    if (!playbackStartTime.current || !state.currentTrack) return;
-    
-    const endTime = new Date();
-    const duration = (endTime.getTime() - playbackStartTime.current.getTime()) / 1000;
-    
-    const analytics: PlaybackAnalytics = {
-      trackId: state.currentTrack.id,
-      startTime: playbackStartTime.current,
-      endTime,
-      duration,
-      completed: duration >= 30 || completed,
-      skipped: !completed && duration < 30,
-      seekCount: seekCount.current,
-      source: 'playlist',
-    };
-    
-    playbackAnalytics.current.push(analytics);
-    console.log('Analytics recorded:', analytics);
-  }, [state.currentTrack]);
+  const recordPlaybackEnd = useCallback(
+    (completed = false) => {
+      if (!playbackStartTime.current || !state.currentTrack) return;
+
+      const endTime = new Date();
+      const duration =
+        (endTime.getTime() - playbackStartTime.current.getTime()) / 1000;
+
+      const analytics: PlaybackAnalytics = {
+        trackId: state.currentTrack.id,
+        startTime: playbackStartTime.current,
+        endTime,
+        duration,
+        completed: duration >= 30 || completed,
+        skipped: !completed && duration < 30,
+        seekCount: seekCount.current,
+        source: "playlist",
+      };
+
+      playbackAnalytics.current.push(analytics);
+      console.log("Analytics recorded:", analytics);
+    },
+    [state.currentTrack]
+  );
 
   const recordPlay = useCallback((track: Track) => {
-    console.log('Play recorded for track:', track.title);
+    console.log("Play recorded for track:", track.title);
   }, []);
 
-  const recordInteraction = useCallback((track: Track, action: UserInteraction['action'], context?: string) => {
-    const interaction: UserInteraction = {
-      trackId: track.id,
-      action,
-      timestamp: new Date(),
-      context,
-    };
-    
-    userInteractions.current.push(interaction);
-    console.log('User interaction recorded:', interaction);
-  }, []);
+  const recordInteraction = useCallback(
+    (track: Track, action: UserInteraction["action"], context?: string) => {
+      const interaction: UserInteraction = {
+        trackId: track.id,
+        action,
+        timestamp: new Date(),
+        context,
+      };
+
+      userInteractions.current.push(interaction);
+      console.log("User interaction recorded:", interaction);
+    },
+    []
+  );
 
   // Load HLS stream
   const loadHlsStream = useCallback((url: string) => {
     if (!hlsRef.current || !audioRef.current) return;
-  
-    dispatch({ type: 'SET_LOADING', payload: true });
-    
+
+    dispatch({ type: "SET_LOADING", payload: true });
+
+    // Clean up existing HLS instance
+    hlsRef.current.detachMedia();
+    hlsRef.current.destroy();
+    hlsRef.current = new Hls({
+      enableWorker: true,
+      lowLatencyMode: true,
+      backBufferLength: 30,
+    });
+    hlsRef.current.attachMedia(audioRef.current);
+
     if (Hls.isSupported()) {
       const hls = hlsRef.current;
-      
+
       hls.loadSource(url);
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        audioRef.current?.play().catch(e => {
-          console.error('Playback error:', e);
-          dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' });
+        audioRef.current?.play().catch((e) => {
+          console.error("Playback error:", e);
+          dispatch({ type: "SET_ERROR", payload: "Failed to play audio" });
         });
       });
-      
+
       hls.on(Hls.Events.ERROR, (event, data) => {
         if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-          console.error('Network error:', data);
-          dispatch({ type: 'SET_ERROR', payload: 'Network error loading stream' });
+          console.error("Network error:", data);
+          dispatch({
+            type: "SET_ERROR",
+            payload: "Network error loading stream",
+          });
         }
       });
-      
-    } else if (audioRef.current.canPlayType('application/vnd.apple.mpegurl')) {
-      // Safari native HLS support
+    } else if (audioRef.current.canPlayType("application/vnd.apple.mpegurl")) {
       audioRef.current.src = url;
-      audioRef.current.addEventListener('loadedmetadata', () => {
-        audioRef.current?.play().catch(e => {
-          dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' });
-        });
-      });
+      audioRef.current.addEventListener(
+        "loadedmetadata",
+        () => {
+          audioRef.current?.play().catch((e) => {
+            dispatch({ type: "SET_ERROR", payload: "Failed to play audio" });
+          });
+        },
+        { once: true }
+      );
     } else {
-      dispatch({ type: 'SET_ERROR', payload: 'HLS is not supported in this browser' });
+      dispatch({
+        type: "SET_ERROR",
+        payload: "HLS is not supported in this browser",
+      });
     }
   }, []);
 
   // Playback controls
-  const play = useCallback(async (track?: Track) => {
-    if (!audioRef.current || !hlsRef.current) return;
-    
-    try {
-      if (track && track.id !== state.currentTrack?.id) {
-        loadHlsStream(track.url);
-        dispatch({ type: 'SET_CURRENT_TRACK', payload: track });
-      } else if (audioRef.current.paused) {
-        await audioRef.current.play();
+  const play = useCallback(
+    async (track?: Track) => {
+      if (!audioRef.current || !hlsRef.current) return;
+
+      try {
+        if (track) {
+          // Always load the new track's HLS stream
+          loadHlsStream(track.url);
+          dispatch({ type: "SET_CURRENT_TRACK", payload: track });
+          dispatch({ type: "SET_PLAYING", payload: true });
+        } else if (audioRef.current.paused && state.currentTrack) {
+          // Resume playback if no new track is provided and there's a current track
+          await audioRef.current.play();
+        }
+      } catch (error) {
+        console.error("Playback error:", error);
+        dispatch({ type: "SET_ERROR", payload: "Failed to play audio" });
       }
-    } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: 'Failed to play audio' });
-    }
-  }, [state.currentTrack, loadHlsStream]);
+    },
+    [state.currentTrack, loadHlsStream]
+  );
 
   const pause = useCallback(() => {
     if (audioRef.current) {
@@ -324,52 +422,59 @@ export function AudioProvider({ children }: AudioProviderProps) {
   }, [state.isPlaying, play, pause]);
 
   const handleNext = useCallback(() => {
-    if (state.queue.length === 0) return;
-    
+    const currentState = stateRef.current;
+    if (currentState.queue.length === 0) return;
+
     let nextIndex: number;
-    
-    if (state.repeatMode === 'one') {
-      nextIndex = state.currentIndex;
-    } else if (state.isShuffled) {
-      nextIndex = Math.floor(Math.random() * state.queue.length);
+
+    if (currentState.repeatMode === "one") {
+      nextIndex = currentState.currentIndex;
+    } else if (currentState.isShuffled) {
+      nextIndex = Math.floor(Math.random() * currentState.queue.length);
     } else {
-      nextIndex = state.currentIndex + 1;
-      if (nextIndex >= state.queue.length) {
-        if (state.repeatMode === 'all') {
+      nextIndex = currentState.currentIndex + 1;
+      if (nextIndex >= currentState.queue.length) {
+        if (currentState.repeatMode === "all") {
           nextIndex = 0;
         } else {
-          return; // End of queue
+          return;
         }
       }
     }
-    
-    dispatch({ type: 'SET_CURRENT_INDEX', payload: nextIndex });
-    play(state.queue[nextIndex]);
-  }, [state.queue, state.currentIndex, state.repeatMode, state.isShuffled, play]);
+
+    dispatch({ type: "SET_CURRENT_INDEX", payload: nextIndex });
+    play(currentState.queue[nextIndex]);
+  }, [play]);
 
   const previous = useCallback(() => {
     if (state.queue.length === 0) return;
-    
+
     let prevIndex: number;
-    
-    if (state.repeatMode === 'one') {
+
+    if (state.repeatMode === "one") {
       prevIndex = state.currentIndex;
     } else if (state.isShuffled) {
       prevIndex = Math.floor(Math.random() * state.queue.length);
     } else {
       prevIndex = state.currentIndex - 1;
       if (prevIndex < 0) {
-        if (state.repeatMode === 'all') {
+        if (state.repeatMode === "all") {
           prevIndex = state.queue.length - 1;
         } else {
           prevIndex = 0;
         }
       }
     }
-    
-    dispatch({ type: 'SET_CURRENT_INDEX', payload: prevIndex });
+
+    dispatch({ type: "SET_CURRENT_INDEX", payload: prevIndex });
     play(state.queue[prevIndex]);
-  }, [state.queue, state.currentIndex, state.repeatMode, state.isShuffled, play]);
+  }, [
+    state.queue,
+    state.currentIndex,
+    state.repeatMode,
+    state.isShuffled,
+    play,
+  ]);
 
   const seek = useCallback((time: number) => {
     if (audioRef.current) {
@@ -381,7 +486,7 @@ export function AudioProvider({ children }: AudioProviderProps) {
   const setVolume = useCallback((volume: number) => {
     if (audioRef.current) {
       audioRef.current.volume = volume;
-      dispatch({ type: 'SET_VOLUME', payload: volume });
+      dispatch({ type: "SET_VOLUME", payload: volume });
     }
   }, []);
 
@@ -389,61 +494,81 @@ export function AudioProvider({ children }: AudioProviderProps) {
     if (audioRef.current) {
       const newMuted = !state.isMuted;
       audioRef.current.muted = newMuted;
-      dispatch({ type: 'SET_MUTED', payload: newMuted });
+      dispatch({ type: "SET_MUTED", payload: newMuted });
     }
   }, [state.isMuted]);
 
   // Queue management
-  const setQueue = useCallback((tracks: Track[], startIndex = 0) => {
-    dispatch({ type: 'SET_QUEUE', payload: { tracks, index: startIndex } });
-  }, []);
+  const setQueue = useCallback(
+    (tracks: Track[], startIndex = 0) => {
+      if (tracks.length === 0) return;
+      dispatch({ type: "SET_QUEUE", payload: { tracks, index: startIndex } });
+      play(tracks[startIndex]);
+    },
+    [play]
+  );
 
   const addToQueue = useCallback((track: Track) => {
-    dispatch({ type: 'ADD_TO_QUEUE', payload: track });
+    dispatch({ type: "ADD_TO_QUEUE", payload: track });
   }, []);
 
   const removeFromQueue = useCallback((index: number) => {
-    dispatch({ type: 'REMOVE_FROM_QUEUE', payload: index });
+    dispatch({ type: "REMOVE_FROM_QUEUE", payload: index });
   }, []);
 
   const clearQueue = useCallback(() => {
-    dispatch({ type: 'CLEAR_QUEUE' });
+    dispatch({ type: "CLEAR_QUEUE" });
   }, []);
 
   // Playback modes
   const toggleShuffle = useCallback(() => {
-    dispatch({ type: 'SET_SHUFFLE', payload: !state.isShuffled });
+    dispatch({ type: "SET_SHUFFLE", payload: !state.isShuffled });
   }, [state.isShuffled]);
 
-  const setRepeatMode = useCallback((mode: 'off' | 'all' | 'one') => {
-    dispatch({ type: 'SET_REPEAT', payload: mode });
+  const setRepeatMode = useCallback((mode: "off" | "all" | "one") => {
+    dispatch({ type: "SET_REPEAT", payload: mode });
   }, []);
 
   // Analytics actions
-  const trackPlay = useCallback((track: Track, source: string, sourceId?: string) => {
-    recordInteraction(track, 'like', `${source}:${sourceId}`);
-  }, [recordInteraction]);
+  const trackPlay = useCallback(
+    (track: Track, source: string, sourceId?: string) => {
+      recordInteraction(track, "like", `${source}:${sourceId}`);
+    },
+    [recordInteraction]
+  );
 
-  const trackSkip = useCallback((track: Track) => {
-    recordPlaybackEnd();
-    console.log('Track skipped:', track.title);
-  }, [recordPlaybackEnd]);
+  const trackSkip = useCallback(
+    (track: Track) => {
+      recordPlaybackEnd();
+      console.log("Track skipped:", track.title);
+    },
+    [recordPlaybackEnd]
+  );
 
   const trackComplete = useCallback((track: Track) => {
-    console.log('Track completed:', track.title);
+    console.log("Track completed:", track.title);
   }, []);
 
-  const trackLike = useCallback((track: Track) => {
-    recordInteraction(track, 'like');
-  }, [recordInteraction]);
+  const trackLike = useCallback(
+    (track: Track) => {
+      recordInteraction(track, "like");
+    },
+    [recordInteraction]
+  );
 
-  const trackUnlike = useCallback((track: Track) => {
-    recordInteraction(track, 'unlike');
-  }, [recordInteraction]);
+  const trackUnlike = useCallback(
+    (track: Track) => {
+      recordInteraction(track, "unlike");
+    },
+    [recordInteraction]
+  );
 
-  const trackReport = useCallback((track: Track, reason: string) => {
-    recordInteraction(track, 'report', reason);
-  }, [recordInteraction]);
+  const trackReport = useCallback(
+    (track: Track, reason: string) => {
+      recordInteraction(track, "report", reason);
+    },
+    [recordInteraction]
+  );
 
   const contextValue: AudioContextType = {
     ...state,
@@ -479,7 +604,7 @@ export function AudioProvider({ children }: AudioProviderProps) {
 export function useAudio(): AudioContextType {
   const context = useContext(AudioContext);
   if (!context) {
-    throw new Error('useAudio must be used within an AudioProvider');
+    throw new Error("useAudio must be used within an AudioProvider");
   }
   return context;
 }
