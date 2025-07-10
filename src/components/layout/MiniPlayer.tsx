@@ -305,7 +305,7 @@ export function MiniPlayer() {
                   </div>
                 )}
               </div>
-
+              {/* view queue button */}
               <Button
                 variant="ghost"
                 size="sm"
