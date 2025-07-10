@@ -215,7 +215,13 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     pause,
     togglePlay: () => (state.isPlaying ? pause() : play()),
     next: handleNext,
-    previous: () => {},
+    previous: () => {
+      const state = stateRef.current;
+      if (state.queue.length === 0 || state.currentIndex <= 0) return;
+      const prevIndex = state.currentIndex - 1;
+      dispatch({ type: "SET_CURRENT_INDEX", payload: prevIndex });
+      play(state.queue[prevIndex]);
+    },
     seek: (time) => { if (audioRef.current) audioRef.current.currentTime = time },
     setVolume: (volume) => { if (audioRef.current) audioRef.current.volume = volume },
     toggleMute: () => {
