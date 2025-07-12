@@ -86,10 +86,11 @@ export default function HomePage() {
       <div className="space-y-8 p-6">
         {data.featured.map((section, index) => {
           switch (section.type) {
-            case CONTENT_TYPES.SLIDER:
+            case CONTENT_TYPES.NEW_RELEASE:
               return (
                 <MusicHeroSlider
-                 
+                key={index}
+                releases={section.HomeRelease || []}
                  />
               );
 
@@ -105,14 +106,14 @@ export default function HomePage() {
                 />
               );
 
-            case CONTENT_TYPES.NEW_RELEASE:
-              return (
-                <NewReleasesSection
-                  key={index}
-                  releases={section.HomeRelease || []}
-                  heading={section.heading || "New Releases"}
-                />
-              );
+            // case CONTENT_TYPES.NEW_RELEASE:
+            //   return (
+            //     <NewReleasesSection
+            //       key={index}
+            //       releases={section.HomeRelease || []}
+            //       heading={section.heading || "New Releases"}
+            //     />
+            //   );
 
             case CONTENT_TYPES.ARTIST:
               return (
