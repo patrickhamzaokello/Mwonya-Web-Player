@@ -1,3 +1,5 @@
+import { Album, Track } from "./home_feed_types"
+
 export interface ArtistIntro {
   id: string
   name: string
@@ -23,34 +25,9 @@ export interface ArtistPick {
   song_cover: string
 }
 
-export interface Track {
-  id: string
-  title: string
-  artist: string
-  artistID: string
-  album: string
-  artworkPath: string
-  genre: string
-  genreID: string
-  duration: string
-  lyrics: string | null
-  path: string
-  totalplays: number
-  albumID: string
-}
 
-export interface ArtistAlbum {
-  id: string
-  title: string
-  artist: string
-  genre: string
-  artworkPath: string
-  tag: string
-  exclusive: boolean
-  description: string
-  datecreated: string
-  totalsongplays: string
-}
+
+
 
 export interface RelatedArtist {
   id: string
@@ -96,7 +73,7 @@ export interface ArtistSection {
   ArtistIntro?: ArtistIntro[]
   ArtistPick?: ArtistPick[]
   Tracks?: Track[]
-  ArtistAlbum?: ArtistAlbum[]
+  ArtistAlbum?: Album[]
   RelatedArtist?: RelatedArtist[]
   Events?: ArtistEvent[]
   Bio?: ArtistBio[]
@@ -113,7 +90,7 @@ export interface ProcessedArtistData {
   intro: ArtistIntro | null
   latestRelease: ArtistPick | null
   popularTracks: Track[]
-  discography: ArtistAlbum[]
+  discography: Album[]
   relatedArtists: RelatedArtist[]
   events: ArtistEvent[]
   bio: ArtistBio | null

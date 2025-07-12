@@ -6,7 +6,6 @@ import { useAudio } from "@/contexts/EnhancedAudioContext";
 
 import { useAuth } from "@/contexts/AuthContext";
 
-
 import { useHomeFeed } from "@/hooks/use-home-feed";
 import { DEFAULT_USER_ID, CONTENT_TYPES } from "@/lib/constants";
 import { MusicHeroSlider } from "@/components/home-sections/hero-section";
@@ -89,9 +88,9 @@ export default function HomePage() {
             case CONTENT_TYPES.NEW_RELEASE:
               return (
                 <MusicHeroSlider
-                key={index}
-                releases={section.HomeRelease || []}
-                 />
+                  key={index}
+                  releases={section.HomeRelease || []}
+                />
               );
 
             case CONTENT_TYPES.IMAGE_AD:
@@ -133,14 +132,14 @@ export default function HomePage() {
                 />
               );
 
-              case CONTENT_TYPES.DJS:
-                return (
-                  <FeaturedAlbumsSection
-                    key={index}
-                    albums={section.FeaturedDjMixes || []}
-                    heading={section.heading || "Featured Mixtapes"}
-                  />
-                );
+            case CONTENT_TYPES.DJS:
+              return (
+                <FeaturedAlbumsSection
+                  key={index}
+                  albums={section.FeaturedDjMixes || []}
+                  heading={section.heading || "Featured Mixtapes"}
+                />
+              );
 
             case CONTENT_TYPES.GENRE:
               return (
@@ -167,19 +166,19 @@ export default function HomePage() {
             case CONTENT_TYPES.PLAYLIST:
               return (
                 <FeaturedPlaylistsSection
-                    key={index}
-                    playlists={section.featuredPlaylists || []}
-                    heading={section.heading || "Featured Playlists"}
-                  />
+                  key={index}
+                  playlists={section.featuredPlaylists || []}
+                  heading={section.heading || "Featured Playlists"}
+                />
               );
 
             case CONTENT_TYPES.TREND:
               return (
                 <FeaturedTracksSection
-                key={index}
-                tracks={section.Tracks || []}
-                heading={section.heading || "Featured Tracks"}
-              />
+                  key={index}
+                  tracks={section.Tracks || []}
+                  heading={section.heading || "Featured Tracks"}
+                />
               );
 
             case CONTENT_TYPES.TEXT_AD:
