@@ -1,7 +1,19 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ChevronLeft, ChevronRight, Play, Pause, Heart, Share2, Plus, Volume2, CheckCircle, Clock, Music } from "lucide-react"
+import {
+  ChevronLeft,
+  ChevronRight,
+  Play,
+  Pause,
+  Heart,
+  Share2,
+  Plus,
+  Volume2,
+  CheckCircle,
+  Clock,
+  Music,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import Image from "next/image"
@@ -19,16 +31,13 @@ export function MusicHeroSlider({ releases }: MusicHeroSliderProps) {
   const [isLiked, setIsLiked] = useState(false)
   const { setQueue, play, currentTrack, isPlaying } = useAudio()
 
-  // Use all releases for the hero slider, or fallback to empty array
   const heroReleases = releases || []
 
   useEffect(() => {
     if (!isAutoPlaying || heroReleases.length === 0) return
-
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % heroReleases.length)
     }, 6000)
-
     return () => clearInterval(interval)
   }, [isAutoPlaying, heroReleases.length])
 
@@ -49,9 +58,7 @@ export function MusicHeroSlider({ releases }: MusicHeroSliderProps) {
   }
 
   const handlePlayRelease = (release: NewRelease) => {
-    // Fetch album tracks
     const tracks = release.Tracks || []
-
     if (tracks && tracks.length > 0) {
       const updatedTracks = tracks.map((track) => ({
         ...track,
@@ -61,23 +68,21 @@ export function MusicHeroSlider({ releases }: MusicHeroSliderProps) {
         duration: Number(track.duration),
         genre: track.genre ?? undefined,
       }))
-
       setQueue(updatedTracks, 0)
       play(updatedTracks[0])
     }
   }
 
-  // Enhanced gradient backgrounds with better color combinations
   const getBackgroundGradient = (index: number) => {
     const gradients = [
       "from-violet-600 via-purple-600 to-blue-600",
-      "from-pink-500 via-rose-500 to-orange-500", 
+      "from-pink-500 via-rose-500 to-orange-500",
       "from-emerald-500 via-teal-500 to-cyan-500",
       "from-indigo-600 via-blue-600 to-purple-600",
       "from-orange-500 via-red-500 to-pink-500",
       "from-teal-600 via-green-600 to-emerald-600",
       "from-red-600 via-pink-600 to-rose-600",
-      "from-blue-600 via-indigo-600 to-violet-600"
+      "from-blue-600 via-indigo-600 to-violet-600",
     ]
     return gradients[index % gradients.length]
   }
@@ -108,8 +113,8 @@ export function MusicHeroSlider({ releases }: MusicHeroSliderProps) {
         style={{ transform: `translateX(-${currentSlide * 100}%)` }}
       >
         {heroReleases.map((release, index) => (
-          <div 
-            key={release.id} 
+          <div
+            key={release.id}
             className={`min-w-full h-full bg-gradient-to-br ${getBackgroundGradient(index)} relative`}
           >
             {/* Background Pattern Overlay */}
@@ -120,10 +125,8 @@ export function MusicHeroSlider({ releases }: MusicHeroSliderProps) {
 
             <div className="relative z-10 container mx-auto px-4 md:px-6 lg:px-8 h-full">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-center h-full py-6 md:py-8">
-                
                 {/* Content Section */}
-                <div className="space-y-4 md:space-y-6 text-white order-2 lg:order-1">
-                  
+                <div className="space-y-6 md:space-y-8 text-white order-2 lg:order-1">
                   {/* Header Tags */}
                   <div className="flex flex-wrap items-center gap-2">
                     <div className="inline-flex items-center px-3 py-1 bg-white/15 backdrop-blur-sm rounded-full border border-white/20">
@@ -138,44 +141,67 @@ export function MusicHeroSlider({ releases }: MusicHeroSliderProps) {
                     )}
                   </div>
 
-                  {/* Main Content */}
-                  <div className="space-y-3 md:space-y-4">
-                    {/* Title */}
-                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-black leading-tight tracking-tight">
-                      {release.title}
-                    </h1>
-
-                    {/* Artist */}
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 md:w-8 md:h-8 rounded-full overflow-hidden ring-2 ring-white/30">
+                  {/* Enhanced Title and Artist Section */}
+                  <div className="space-y-4">
+                    {/* Artist Info - Moved above title for better hierarchy */}
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden ring-2 ring-white/40 shadow-lg">
                           <Image
                             src={release.artistArtwork || "/placeholder.svg"}
                             alt={release.artist}
-                            width={32}
-                            height={32}
+                            width={48}
+                            height={48}
                             loader={customUrlImageLoader}
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-white/95">
+                        {/* Verified badge positioned on avatar */}
+                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center ring-2 ring-white">
+                          <CheckCircle className="w-3 h-3 text-white fill-current" />
+                        </div>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-white/70 text-xs md:text-sm font-medium uppercase tracking-wide">
+                          Artist
+                        </span>
+                        <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-white leading-tight">
                           {release.artist}
                         </h2>
                       </div>
-                      <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-blue-300" />
                     </div>
 
-                    {/* Stats */}
-                    <div className="flex items-center gap-4 text-white/80">
+                    {/* Main Title - Now with better spacing and hierarchy */}
+                    <div className="space-y-2">
+                      <span className="text-white/60 text-sm md:text-base font-medium uppercase tracking-wider">
+                        Album
+                      </span>
+                      <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-black leading-tight tracking-tight text-white">
+                        {release.title}
+                      </h1>
+                    </div>
+
+                    {/* Stats with better visual separation */}
+                    <div className="flex items-center gap-6 pt-2">
                       {release.Tracks && (
-                        <div className="flex items-center gap-1">
-                          <Music className="w-3 h-3" />
-                          <span className="text-sm font-medium">{release.Tracks.length} tracks</span>
+                        <div className="flex items-center gap-2 text-white/80">
+                          <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center">
+                            <Music className="w-4 h-4" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-xs text-white/60 uppercase tracking-wide">Tracks</span>
+                            <span className="text-sm font-semibold">{release.Tracks.length}</span>
+                          </div>
                         </div>
                       )}
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        <span className="text-sm font-medium">2024</span>
+                      <div className="flex items-center gap-2 text-white/80">
+                        <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center">
+                          <Clock className="w-4 h-4" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-xs text-white/60 uppercase tracking-wide">Year</span>
+                          <span className="text-sm font-semibold">2024</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -184,18 +210,18 @@ export function MusicHeroSlider({ releases }: MusicHeroSliderProps) {
                   <div className="flex flex-wrap items-center gap-3 pt-2">
                     <Button
                       size="default"
-                      className="bg-white text-black hover:bg-white/90 font-bold px-6 py-2 text-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                      className="bg-white text-black hover:bg-white/90 font-bold px-6 py-2.5 text-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                       onClick={() => handlePlayRelease(release)}
                       disabled={isPlaying && currentTrack?.id === String(release.id)}
                     >
                       <Play className="h-4 w-4 mr-2 fill-current" />
                       {isPlaying && currentTrack?.id === String(release.id) ? "Playing" : "Play Album"}
                     </Button>
-                    
+
                     <Button
                       variant="outline"
                       size="default"
-                      className="border-2 border-white/40 text-white hover:bg-white/10 bg-white/5 backdrop-blur-sm font-semibold px-4 py-2 rounded-full text-sm"
+                      className="border-2 border-white/40 text-white hover:bg-white/10 bg-white/5 backdrop-blur-sm font-semibold px-4 py-2.5 rounded-full text-sm"
                       onClick={() => setIsLiked(!isLiked)}
                     >
                       <Heart className={`h-4 w-4 mr-1 ${isLiked ? "fill-current text-red-400" : ""}`} />
@@ -203,17 +229,17 @@ export function MusicHeroSlider({ releases }: MusicHeroSliderProps) {
                     </Button>
 
                     <div className="flex items-center gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="text-white hover:bg-white/10 w-8 h-8 rounded-full backdrop-blur-sm"
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-white hover:bg-white/10 w-9 h-9 rounded-full backdrop-blur-sm"
                       >
                         <Plus className="h-4 w-4" />
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="text-white hover:bg-white/10 w-8 h-8 rounded-full backdrop-blur-sm"
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-white hover:bg-white/10 w-9 h-9 rounded-full backdrop-blur-sm"
                       >
                         <Share2 className="h-4 w-4" />
                       </Button>
@@ -224,7 +250,6 @@ export function MusicHeroSlider({ releases }: MusicHeroSliderProps) {
                 {/* Album Art Section */}
                 <div className="relative flex justify-center lg:justify-end order-1 lg:order-2">
                   <div className="relative group">
-                    
                     {/* Main Album Art */}
                     <div className="relative">
                       <Card className="relative overflow-hidden shadow-2xl border-0 bg-black/10 backdrop-blur-sm p-1">
@@ -237,7 +262,7 @@ export function MusicHeroSlider({ releases }: MusicHeroSliderProps) {
                             loader={customUrlImageLoader}
                             className="w-48 h-48 md:w-64 md:h-64 lg:w-72 lg:h-72 object-cover transition-all duration-500 group-hover:scale-110"
                           />
-                          
+
                           {/* Floating Play Button */}
                           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
                             <Button
@@ -277,7 +302,7 @@ export function MusicHeroSlider({ releases }: MusicHeroSliderProps) {
         >
           {isAutoPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
         </Button>
-        
+
         <Button
           variant="ghost"
           size="icon"
@@ -286,7 +311,7 @@ export function MusicHeroSlider({ releases }: MusicHeroSliderProps) {
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        
+
         <Button
           variant="ghost"
           size="icon"
@@ -303,9 +328,7 @@ export function MusicHeroSlider({ releases }: MusicHeroSliderProps) {
           <button
             key={index}
             className={`h-1.5 transition-all duration-300 rounded-full ${
-              index === currentSlide 
-                ? "bg-white w-6 shadow-lg" 
-                : "bg-white/40 hover:bg-white/60 w-1.5"
+              index === currentSlide ? "bg-white w-6 shadow-lg" : "bg-white/40 hover:bg-white/60 w-1.5"
             }`}
             onClick={() => goToSlide(index)}
           />
@@ -314,11 +337,11 @@ export function MusicHeroSlider({ releases }: MusicHeroSliderProps) {
 
       {/* Enhanced Progress Bar */}
       <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black/20">
-        <div 
+        <div
           className="h-full bg-white shadow-lg transition-all duration-300"
-          style={{ 
+          style={{
             width: `${((currentSlide + 1) / heroReleases.length) * 100}%`,
-            boxShadow: '0 0 10px rgba(255,255,255,0.5)'
+            boxShadow: "0 0 10px rgba(255,255,255,0.5)",
           }}
         />
       </div>
