@@ -45,7 +45,10 @@ export function RelatedArtists({ artists }: RelatedArtistsProps) {
                     {artist.verified && (
                       <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow-lg">
                         <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-full p-1.5">
-                          <CheckCircle className="w-4 h-4 text-white fill-current" />
+                          <svg width="27" height="27" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M25.875 13.5019L23.13 10.3744L23.5125 6.23438L19.4513 5.31187L17.325 1.73438L13.5 3.37688L9.675 1.73438L7.54875 5.31187L3.4875 6.22313L3.87 10.3631L1.125 13.5019L3.87 16.6294L3.4875 20.7806L7.54875 21.7031L9.675 25.2806L13.5 23.6269L17.325 25.2694L19.4513 21.6919L23.5125 20.7694L23.13 16.6294L25.875 13.5019ZM11.25 19.1269L6.75 14.6269L8.33625 13.0406L11.25 15.9431L18.6638 8.52937L20.25 10.1269L11.25 19.1269Z" fill="#F8F8F8"/>
+</svg>
+
                         </div>
                       </div>
                     )}

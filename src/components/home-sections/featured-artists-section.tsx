@@ -105,37 +105,45 @@ export function FeaturedArtistsSection({
 
       <div
         ref={scrollContainerRef}
-        className="flex gap-6 overflow-x-auto scrollbar-hide pb-4"
+        className="flex overflow-x-auto scrollbar-hide pb-4"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {artists.map((artist) => (
-          <div
-            key={artist.id}
-            className="flex-shrink-0 w-[160px] text-center cursor-pointer group"
-          >
-            <div className="relative overflow-hidden rounded-full bg-muted mb-3">
-              <Image
-                src={artist.profilephoto || "/placeholder.svg"}
-                alt={artist.name}
-                width={260}
-                height={260}
-                loader={customUrlImageLoader}
-                className="aspect-square object-cover transition-all duration-300 group-hover:brightness-90"
-              />
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center justify-center gap-1">
-                <Link href={`/library/artists/${artist.id}`}>
+          <Link key={artist.id} href={`/library/artists/${artist.id}`}>
+            <div className="flex-shrink-0 w-[250px] text-center cursor-pointer group hover:scale-[1.02] transition-all duration-300 hover:bg-primary/5 rounded-lg p-4  hover:shadow-lg transform hover:translate-y-[-2px] flex flex-col items-center justify-center text-muted-foreground hover:text-foreground">
+              <div className="relative overflow-hidden rounded-full bg-muted mb-3">
+                <Image
+                  src={artist.profilephoto || "/placeholder.svg"}
+                  alt={artist.name}
+                  width={250}
+                  height={250}
+                  loader={customUrlImageLoader}
+                  className="aspect-square object-cover transition-all duration-300 group-hover:brightness-90"
+                />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center justify-center gap-1">
                   <h3 className="font-semibold text-foreground truncate">
                     {artist.name}
                   </h3>
-                </Link>
-                {artist.verified && (
-                  <CheckCircle className="w-4 h-4 text-blue-500 flex-shrink-0" />
-                )}
+                  {artist.verified && (
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 27 27"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M25.875 13.5019L23.13 10.3744L23.5125 6.23438L19.4513 5.31187L17.325 1.73438L13.5 3.37688L9.675 1.73438L7.54875 5.31187L3.4875 6.22313L3.87 10.3631L1.125 13.5019L3.87 16.6294L3.4875 20.7806L7.54875 21.7031L9.675 25.2806L13.5 23.6269L17.325 25.2694L19.4513 21.6919L23.5125 20.7694L23.13 16.6294L25.875 13.5019ZM11.25 19.1269L6.75 14.6269L8.33625 13.0406L11.25 15.9431L18.6638 8.52937L20.25 10.1269L11.25 19.1269Z"
+                        fill="#a900ff"
+                      />
+                    </svg>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
