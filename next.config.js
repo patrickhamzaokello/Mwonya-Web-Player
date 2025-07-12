@@ -23,6 +23,11 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'www.promptengineering.org',
+        pathname: '/**', // Updated to match all paths under www.promptengineering.org
+      },
+      {
+        protocol: 'https',
         hostname: 'mwonya-kasfa-assets-store.s3.us-east-1.amazonaws.com',
       },
     ],
