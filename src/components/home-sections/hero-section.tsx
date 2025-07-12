@@ -84,13 +84,13 @@ export function MusicHeroSlider({ releases }: MusicHeroSliderProps) {
 
   if (!releases || heroReleases.length === 0) {
     return (
-      <div className="relative w-full h-[500px] md:h-[600px] lg:h-[700px] bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-        <div className="text-center space-y-6">
-          <div className="w-16 h-16 mx-auto bg-gray-300 rounded-full flex items-center justify-center">
-            <Music className="w-8 h-8 text-gray-500" />
+      <div className="relative w-full h-[350px] md:h-[450px] lg:h-[500px] bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 mx-auto bg-gray-300 rounded-full flex items-center justify-center">
+            <Music className="w-6 h-6 text-gray-500" />
           </div>
           <div className="space-y-2">
-            <h3 className="text-gray-700 text-xl md:text-2xl font-semibold">No releases available</h3>
+            <h3 className="text-gray-700 text-lg md:text-xl font-semibold">No releases available</h3>
             <p className="text-gray-500 text-sm">Check back later for new music</p>
           </div>
         </div>
@@ -101,7 +101,7 @@ export function MusicHeroSlider({ releases }: MusicHeroSliderProps) {
   const currentRelease = heroReleases[currentSlide]
 
   return (
-    <div className="relative w-full h-[500px] md:h-[600px] lg:h-[700px] overflow-hidden">
+    <div className="relative w-full h-[350px] md:h-[450px] lg:h-[500px] overflow-hidden">
       {/* Slides Container */}
       <div
         className="flex transition-transform duration-700 ease-out h-full"
@@ -118,142 +118,142 @@ export function MusicHeroSlider({ releases }: MusicHeroSliderProps) {
               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-transparent"></div>
             </div>
 
-            <div className="relative z-10 container mx-auto px-6 md:px-8 lg:px-12 h-full">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center h-full py-12">
+            <div className="relative z-10 container mx-auto px-4 md:px-6 lg:px-8 h-full">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-center h-full py-6 md:py-8">
                 
                 {/* Content Section */}
-                <div className="lg:col-span-7 space-y-8 text-white order-2 lg:order-1">
+                <div className="space-y-4 md:space-y-6 text-white order-2 lg:order-1">
                   
                   {/* Header Tags */}
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="inline-flex items-center px-4 py-2 bg-white/15 backdrop-blur-sm rounded-full border border-white/20">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="inline-flex items-center px-3 py-1 bg-white/15 backdrop-blur-sm rounded-full border border-white/20">
                       <span className="text-xs font-semibold uppercase tracking-wider">
                         {release.exclusive ? "🔥 Exclusive" : "✨ New Release"}
                       </span>
                     </div>
                     {release.tag && (
-                      <div className="inline-flex items-center px-3 py-1 bg-black/20 backdrop-blur-sm rounded-full">
+                      <div className="inline-flex items-center px-2 py-1 bg-black/20 backdrop-blur-sm rounded-full">
                         <span className="text-xs font-medium">{release.tag}</span>
                       </div>
                     )}
                   </div>
 
                   {/* Main Content */}
-                  <div className="space-y-6">
+                  <div className="space-y-3 md:space-y-4">
                     {/* Title */}
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black leading-[0.85] tracking-tight">
+                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-black leading-tight tracking-tight">
                       {release.title}
                     </h1>
 
                     {/* Artist */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden ring-2 ring-white/30">
+                        <div className="w-6 h-6 md:w-8 md:h-8 rounded-full overflow-hidden ring-2 ring-white/30">
                           <Image
                             src={release.artistArtwork || "/placeholder.svg"}
                             alt={release.artist}
-                            width={40}
-                            height={40}
+                            width={32}
+                            height={32}
                             loader={customUrlImageLoader}
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white/95">
+                        <h2 className="text-lg md:text-xl lg:text-2xl font-bold text-white/95">
                           {release.artist}
                         </h2>
                       </div>
-                      <CheckCircle className="w-5 h-5 md:w-6 md:h-6 text-blue-300" />
+                      <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-blue-300" />
                     </div>
 
                     {/* Stats */}
-                    <div className="flex items-center gap-6 text-white/80">
+                    <div className="flex items-center gap-4 text-white/80">
                       {release.Tracks && (
-                        <div className="flex items-center gap-2">
-                          <Music className="w-4 h-4" />
+                        <div className="flex items-center gap-1">
+                          <Music className="w-3 h-3" />
                           <span className="text-sm font-medium">{release.Tracks.length} tracks</span>
                         </div>
                       )}
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4" />
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
                         <span className="text-sm font-medium">2024</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex flex-wrap items-center gap-4 pt-4">
+                  <div className="flex flex-wrap items-center gap-3 pt-2">
                     <Button
-                      size="lg"
-                      className="bg-white text-black hover:bg-white/90 font-bold px-8 py-3 text-base rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                      size="default"
+                      className="bg-white text-black hover:bg-white/90 font-bold px-6 py-2 text-sm rounded-full shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                       onClick={() => handlePlayRelease(release)}
                       disabled={isPlaying && currentTrack?.id === String(release.id)}
                     >
-                      <Play className="h-5 w-5 mr-2 fill-current" />
+                      <Play className="h-4 w-4 mr-2 fill-current" />
                       {isPlaying && currentTrack?.id === String(release.id) ? "Playing" : "Play Album"}
                     </Button>
                     
                     <Button
                       variant="outline"
-                      size="lg"
-                      className="border-2 border-white/40 text-white hover:bg-white/10 bg-white/5 backdrop-blur-sm font-semibold px-6 py-3 rounded-full"
+                      size="default"
+                      className="border-2 border-white/40 text-white hover:bg-white/10 bg-white/5 backdrop-blur-sm font-semibold px-4 py-2 rounded-full text-sm"
                       onClick={() => setIsLiked(!isLiked)}
                     >
-                      <Heart className={`h-5 w-5 mr-2 ${isLiked ? "fill-current text-red-400" : ""}`} />
+                      <Heart className={`h-4 w-4 mr-1 ${isLiked ? "fill-current text-red-400" : ""}`} />
                       {isLiked ? "Liked" : "Like"}
                     </Button>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="text-white hover:bg-white/10 w-12 h-12 rounded-full backdrop-blur-sm"
+                        className="text-white hover:bg-white/10 w-8 h-8 rounded-full backdrop-blur-sm"
                       >
-                        <Plus className="h-5 w-5" />
+                        <Plus className="h-4 w-4" />
                       </Button>
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="text-white hover:bg-white/10 w-12 h-12 rounded-full backdrop-blur-sm"
+                        className="text-white hover:bg-white/10 w-8 h-8 rounded-full backdrop-blur-sm"
                       >
-                        <Share2 className="h-5 w-5" />
+                        <Share2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
                 </div>
 
                 {/* Album Art Section */}
-                <div className="lg:col-span-5 relative flex justify-center lg:justify-end order-1 lg:order-2">
+                <div className="relative flex justify-center lg:justify-end order-1 lg:order-2">
                   <div className="relative group">
                     
                     {/* Main Album Art */}
                     <div className="relative">
-                      <Card className="relative overflow-hidden shadow-2xl border-0 bg-black/10 backdrop-blur-sm p-2">
+                      <Card className="relative overflow-hidden shadow-2xl border-0 bg-black/10 backdrop-blur-sm p-1">
                         <div className="relative overflow-hidden rounded-lg">
                           <Image
                             src={release.artworkPath || "/placeholder.svg"}
                             alt={release.title}
-                            width={400}
-                            height={400}
+                            width={300}
+                            height={300}
                             loader={customUrlImageLoader}
-                            className="w-64 h-64 md:w-80 md:h-80 lg:w-96 lg:h-96 object-cover transition-all duration-500 group-hover:scale-110"
+                            className="w-48 h-48 md:w-64 md:h-64 lg:w-72 lg:h-72 object-cover transition-all duration-500 group-hover:scale-110"
                           />
                           
                           {/* Floating Play Button */}
                           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
                             <Button
                               size="icon"
-                              className="w-16 h-16 md:w-20 md:h-20 bg-white hover:bg-white/90 text-black rounded-full shadow-2xl transform hover:scale-110 transition-all duration-200"
+                              className="w-12 h-12 md:w-16 md:h-16 bg-white hover:bg-white/90 text-black rounded-full shadow-2xl transform hover:scale-110 transition-all duration-200"
                               onClick={() => handlePlayRelease(release)}
                             >
-                              <Play className="h-8 w-8 md:h-10 md:w-10 ml-1 fill-current" />
+                              <Play className="h-6 w-6 md:h-8 md:w-8 ml-1 fill-current" />
                             </Button>
                           </div>
                         </div>
                       </Card>
 
                       {/* Floating Music Badge */}
-                      <div className="absolute -top-4 -right-4 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30">
-                        <Volume2 className="h-6 w-6 text-white" />
+                      <div className="absolute -top-2 -right-2 w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30">
+                        <Volume2 className="h-4 w-4 text-white" />
                       </div>
                     </div>
 
@@ -268,43 +268,44 @@ export function MusicHeroSlider({ releases }: MusicHeroSliderProps) {
       </div>
 
       {/* Enhanced Navigation Controls */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute left-4 md:left-8 top-1/2 transform -translate-y-1/2 text-white hover:bg-white/20 w-12 h-12 md:w-14 md:h-14 rounded-full backdrop-blur-sm border border-white/20 transition-all duration-200 hover:scale-110"
-        onClick={goToPrevious}
-      >
-        <ChevronLeft className="h-6 w-6 md:h-7 md:w-7" />
-      </Button>
-      
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute right-4 md:right-8 top-1/2 transform -translate-y-1/2 text-white hover:bg-white/20 w-12 h-12 md:w-14 md:h-14 rounded-full backdrop-blur-sm border border-white/20 transition-all duration-200 hover:scale-110"
-        onClick={goToNext}
-      >
-        <ChevronRight className="h-6 w-6 md:h-7 md:w-7" />
-      </Button>
-
-      {/* Auto-play Control */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute top-6 md:top-8 right-6 md:right-8 text-white hover:bg-white/20 w-10 h-10 md:w-12 md:h-12 rounded-full backdrop-blur-sm border border-white/20"
-        onClick={toggleAutoPlay}
-      >
-        {isAutoPlaying ? <Pause className="h-5 w-5 md:h-6 md:w-6" /> : <Play className="h-5 w-5 md:h-6 md:w-6" />}
-      </Button>
+      <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-white hover:bg-white/20 w-8 h-8 rounded-full backdrop-blur-sm border border-white/20"
+          onClick={toggleAutoPlay}
+        >
+          {isAutoPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+        </Button>
+        
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-white hover:bg-white/20 w-8 h-8 rounded-full backdrop-blur-sm border border-white/20"
+          onClick={goToPrevious}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-white hover:bg-white/20 w-8 h-8 rounded-full backdrop-blur-sm border border-white/20"
+          onClick={goToNext}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
 
       {/* Modern Slide Indicators */}
-      <div className="absolute bottom-8 md:bottom-12 left-1/2 transform -translate-x-1/2 flex items-center gap-2">
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2">
         {heroReleases.map((_, index) => (
           <button
             key={index}
-            className={`h-2 transition-all duration-300 rounded-full ${
+            className={`h-1.5 transition-all duration-300 rounded-full ${
               index === currentSlide 
-                ? "bg-white w-8 shadow-lg" 
-                : "bg-white/40 hover:bg-white/60 w-2"
+                ? "bg-white w-6 shadow-lg" 
+                : "bg-white/40 hover:bg-white/60 w-1.5"
             }`}
             onClick={() => goToSlide(index)}
           />
@@ -312,7 +313,7 @@ export function MusicHeroSlider({ releases }: MusicHeroSliderProps) {
       </div>
 
       {/* Enhanced Progress Bar */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20">
+      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black/20">
         <div 
           className="h-full bg-white shadow-lg transition-all duration-300"
           style={{ 
