@@ -11,8 +11,9 @@ export function LatestRelease({ release }: LatestReleaseProps) {
   return (
     <div className="w-full">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-foreground tracking-tight">Latest Release</h2>
-        <p className="text-base text-muted-foreground/80 mt-2">New music from this artist</p>
+
+        <h2 className="text-2xl font-bold text-foreground">Latest Release</h2>
+        <p className="text-sm text-muted-foreground mt-1">New music from this artist</p>
       </div>
 
       {/* Main Content - Flex Layout */}
