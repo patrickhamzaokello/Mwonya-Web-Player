@@ -81,11 +81,9 @@ export function PopularTracks({ tracks }: PopularTracksProps) {
   // Audio context integration
   const { setQueue, play, pause, currentTrack, isPlaying } = useAudio();
 
-  const handlePlayTrack = (track: any, index: number) => {
-    console.log(track)
+  const handlePlayTrack = (index: number) => {
     if ((tracks ?? []).length > 0) {
       // Set the album tracks as queue starting from the selected track
-      if (tracks) {
         const formattedTracks = tracks.map((track) => ({
           ...track,
           url: track.path,
@@ -95,8 +93,7 @@ export function PopularTracks({ tracks }: PopularTracksProps) {
           genre: track.genre ?? undefined,
         }));
         setQueue(formattedTracks, index);
-      }
-      play(track);
+      play(formattedTracks[index]);
     }
   };
 
@@ -108,7 +105,7 @@ export function PopularTracks({ tracks }: PopularTracksProps) {
     } else if (isCurrentTrack && !isPlaying) {
       play(track);
     } else {
-      handlePlayTrack(track, index);
+      handlePlayTrack(index);
     }
   };
 
