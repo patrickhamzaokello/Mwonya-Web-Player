@@ -60,7 +60,7 @@ export default async function ArtistPage({ params }: PageProps) {
           )}
 
           {/* Artist Bio */}
-          {artistData.bio && <ArtistBioSection bio={artistData.bio} />}
+          {/* {artistData.bio && <ArtistBioSection bio={artistData.bio} />} */}
 
           {/* Events section would go here when data is available */}
           {artistData.events.length > 0 && (
