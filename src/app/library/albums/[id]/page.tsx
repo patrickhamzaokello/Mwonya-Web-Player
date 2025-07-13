@@ -10,6 +10,7 @@ import {
   Share,
   RefreshCw,
   AlertCircle,
+  Volume2,
 } from "lucide-react";
 import Image from "next/image";
 import {
@@ -177,6 +178,7 @@ export default function Component() {
       if (data && data.tracks) {
         const formattedTracks = data.tracks.map((track) => ({
           ...track,
+          artwork: data.artworkPath,
           duration: Number(track.duration),
         }));
         setQueue(formattedTracks, 0);
@@ -190,7 +192,6 @@ export default function Component() {
     }
   };
   
-
   const handlePlayTrack = (track: any, index: number) => {
     console.log(track)
     if ((data?.tracks ?? []).length > 0) {
@@ -210,6 +211,18 @@ export default function Component() {
     pause();
   };
 
+  const handlePlayPause = (track: any, index: number) => {
+    const isCurrentTrack = currentTrack?.id === String(track.id);
+    
+    if (isCurrentTrack && isPlaying) {
+      pause();
+    } else if (isCurrentTrack && !isPlaying) {
+      play({ ...track, duration: Number(track.duration) });
+    } else {
+      handlePlayTrack(track, index);
+    }
+  };
+
   // Check if current track is from this album
   const isCurrentAlbumPlaying =
     data?.tracks?.some((track: any) => track.id === currentTrack?.id) &&
@@ -218,6 +231,11 @@ export default function Component() {
   // Check if a specific track is currently playing
   const isTrackPlaying = (track: any) => {
     return currentTrack?.id === track.id && isPlaying;
+  };
+
+  // Check if a specific track is the current track (playing or paused)
+  const isCurrentTrack = (track: any) => {
+    return currentTrack?.id === track.id;
   };
 
   const handleRefresh = () => {
@@ -465,45 +483,60 @@ export default function Component() {
                   Tracks ({data.tracks.length})
                 </h3>
                 {data.tracks.map((track, index) => {
-                  const isCurrentTrack = isTrackPlaying(track);
+                  const isCurrentTrackState = isCurrentTrack(track);
+                  const isTrackCurrentlyPlaying = isTrackPlaying(track);
 
                   return (
                     <div
                       key={track.id}
-                      className={`group flex items-center gap-3 p-2  hover:bg-muted transition-all duration-200 cursor-pointer mb-0 ${
+                      className={`group flex items-center gap-3 p-2 hover:bg-muted transition-all duration-200 cursor-pointer mb-0 rounded-md ${
                         index !== data.tracks.length - 1
                           ? "border-b border-gray-800"
                           : ""
-                      } ${isCurrentTrack ? "bg-gray-800/30" : ""}`}
+                      } ${
+                        isCurrentTrackState 
+                          ? "bg-primary/10 border-l-2 border-primary" 
+                          : ""
+                      }`}
                       onClick={() => handlePlayTrack(track, index)}
                     >
                       {/* Track number / Play button */}
                       <div className="w-5 flex items-center justify-center">
-                        {isCurrentTrack ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="p-0 h-auto text-primary hover:text-primary"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              isPlaying ? handlePauseTrack() : play({ ...track, duration: Number(track.duration) });
-                            }}
-                          >
-                            {isPlaying ? (
-                              <Pause className="w-4 h-4 fill-current" />
+                        {isCurrentTrackState ? (
+                          <div className="flex items-center justify-center">
+                            {isTrackCurrentlyPlaying ? (
+                              <div className="w-3 h-3 flex items-center justify-center">
+                                <div className="flex space-x-0.5">
+                                  <div className="w-0.5 h-2 bg-primary animate-pulse"></div>
+                                  <div className="w-0.5 h-3 bg-primary animate-pulse" style={{ animationDelay: '0.1s' }}></div>
+                                  <div className="w-0.5 h-2 bg-primary animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                                </div>
+                              </div>
                             ) : (
-                              <Play className="w-4 h-4 fill-current" />
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="p-0 h-auto text-primary hover:text-primary w-4 h-4"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  play({ ...track, duration: Number(track.duration) });
+                                }}
+                              >
+                                <Play className="w-4 h-4 fill-current" />
+                              </Button>
                             )}
-                          </Button>
+                          </div>
                         ) : (
                           <>
-                            <span className="text-gray-400 text-sm group-hover:hidden">
+                            <span className={`text-sm group-hover:hidden ${
+                              isCurrentTrackState ? 'text-primary' : 'text-gray-400'
+                            }`}>
                               {index + 1}
                             </span>
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="hidden group-hover:flex p-0 h-auto text-gray-400 hover:text-white"
+                              className="hidden group-hover:flex p-0 h-auto text-gray-400 hover:text-white w-4 h-4"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handlePlayTrack(track, index);
@@ -519,14 +552,16 @@ export default function Component() {
                       <div className="flex-1 min-w-0">
                         <p
                           className={`font-medium truncate transition-colors ${
-                            isCurrentTrack
+                            isCurrentTrackState
                               ? "text-primary"
                               : "text-white group-hover:text-primary"
                           }`}
                         >
                           {track.title}
                         </p>
-                        <p className="text-gray-400 text-sm truncate">
+                        <p className={`text-sm truncate ${
+                          isCurrentTrackState ? 'text-primary/70' : 'text-gray-400'
+                        }`}>
                           {track.artist || data.artistName}
                         </p>
                       </div>
@@ -558,7 +593,9 @@ export default function Component() {
                       </Button>
 
                       {/* Duration */}
-                      <span className="text-gray-400 text-sm w-12 text-right">
+                      <span className={`text-sm w-12 text-right font-mono ${
+                        isCurrentTrackState ? 'text-primary/70' : 'text-gray-400'
+                      }`}>
                         {track.duration}
                       </span>
                     </div>
