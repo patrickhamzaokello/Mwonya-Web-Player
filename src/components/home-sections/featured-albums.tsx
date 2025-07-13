@@ -1,42 +1,124 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import { Play, Share2, ChevronLeft, ChevronRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { useRef, useState, useEffect } from "react"
-import type { Album } from "@/lib/home_feed_types"
-import { useAudio } from "@/contexts/EnhancedAudioContext"
-import { fetchAlbumTracks } from "@/actions/album_tracks_data" // You'll need to create this action
-import Link from "next/link"
-import { customUrlImageLoader } from "@/lib/utils"
+import Image from "next/image";
+import { Play, Share2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useRef, useState, useEffect, useCallback } from "react";
+import type { Album } from "@/lib/home_feed_types";
+import { useAudio } from "@/contexts/EnhancedAudioContext";
+import { fetchAlbumTracks } from "@/actions/album_tracks_data"; // You'll need to create this action
+import Link from "next/link";
+import { customUrlImageLoader } from "@/lib/utils";
 
 interface FeaturedAlbumsSectionProps {
-  albums: Album[]
-  heading: string
+  albums: Album[];
+  heading: string;
 }
 
-export default function FeaturedAlbumsSection({ albums, heading }: FeaturedAlbumsSectionProps) {
-  const scrollContainerRef = useRef<HTMLDivElement>(null)
-  const [canScrollLeft, setCanScrollLeft] = useState(false)
-  const [canScrollRight, setCanScrollRight] = useState(true)
-  const [loadingAlbum, setLoadingAlbum] = useState<string | null>(null)
+// Custom hook for image fallback
+const useImageFallback = (
+  src: string,
+  fallbackSrc: string = "/placeholder.svg"
+) => {
+  const [imgSrc, setImgSrc] = useState(() => {
+    // Initialize with fallback if src is invalid
+    if (!src || src.trim() === "" || src === "/placeholder.svg") {
+      return fallbackSrc;
+    }
+    return src;
+  });
+  const [hasError, setHasError] = useState(false);
 
-  const { setQueue, play } = useAudio()
+  const handleError = useCallback(() => {
+    if (!hasError && imgSrc !== fallbackSrc) {
+      setHasError(true);
+      setImgSrc(fallbackSrc);
+    }
+  }, [hasError, imgSrc, fallbackSrc]);
+
+  // Reset when src changes
+  useEffect(() => {
+    if (src && src !== imgSrc && !hasError) {
+      setImgSrc(src);
+      setHasError(false);
+    }
+  }, [src, imgSrc, hasError]);
+
+  return { imgSrc, handleError };
+};
+
+// Reusable Image Component with fallback
+const ImageWithFallback = ({
+  src,
+  alt,
+  width,
+  height,
+  className = "",
+  priority = false,
+}: {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  className?: string;
+  priority?: boolean;
+}) => {
+  const { imgSrc, handleError } = useImageFallback(src);
+
+  return (
+    <Image
+      src={imgSrc}
+      alt={alt}
+      width={width}
+      height={height}
+      className={className}
+      onError={handleError}
+      priority={priority}
+    />
+  );
+};
+
+// Utility function to validate URLs (keeping your existing logic)
+const isValidUrl = (string: string): boolean => {
+  if (!string || string.trim() === "" || string === "/placeholder.svg") {
+    return false;
+  }
+
+  try {
+    new URL(string);
+    return true;
+  } catch {
+    // If it's a relative path starting with /, it's valid
+    return string.startsWith("/");
+  }
+};
+
+export default function FeaturedAlbumsSection({
+  albums,
+  heading,
+}: FeaturedAlbumsSectionProps) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [loadingAlbum, setLoadingAlbum] = useState<string | null>(null);
+
+  const { setQueue, play } = useAudio();
 
   const checkScrollButtons = () => {
     if (scrollContainerRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current
-      setCanScrollLeft(scrollLeft > 5)
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 5)
+      const { scrollLeft, scrollWidth, clientWidth } =
+        scrollContainerRef.current;
+      setCanScrollLeft(scrollLeft > 5);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 5);
     }
-  }
+  };
 
   const handlePlayAlbum = async (albumId: string) => {
     try {
-      setLoadingAlbum(albumId)
+      setLoadingAlbum(albumId);
 
       // Fetch album tracks using a server action instead of a hook
-      const tracks = await fetchAlbumTracks(albumId)
+      const tracks = await fetchAlbumTracks(albumId);
 
       if (tracks && tracks.length > 0) {
         const updatedTracks = tracks.map((track) => ({
@@ -46,73 +128,75 @@ export default function FeaturedAlbumsSection({ albums, heading }: FeaturedAlbum
           id: String(track.id),
           duration: Number(track.duration),
           genre: track.genre ?? undefined,
-        }))
+        }));
 
-        setQueue(updatedTracks, 0)
-        play(updatedTracks[0])
+        setQueue(updatedTracks, 0);
+        play(updatedTracks[0]);
       }
     } catch (error) {
-      console.error("Error playing album:", error)
+      console.error("Error playing album:", error);
     } finally {
-      setLoadingAlbum(null)
+      setLoadingAlbum(null);
     }
-  }
+  };
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
-      const container = scrollContainerRef.current
-      const containerWidth = container.clientWidth
-      const itemWidth = 250 + 24
-      const itemsToScroll = Math.floor(containerWidth / itemWidth)
-      const scrollDistance = itemsToScroll * itemWidth
+      const container = scrollContainerRef.current;
+      const containerWidth = container.clientWidth;
+      const itemWidth = 250 + 24;
+      const itemsToScroll = Math.floor(containerWidth / itemWidth);
+      const scrollDistance = itemsToScroll * itemWidth;
 
       container.scrollBy({
         left: -scrollDistance,
         behavior: "smooth",
-      })
+      });
     }
-  }
+  };
 
   const scrollRight = () => {
     if (scrollContainerRef.current) {
-      const container = scrollContainerRef.current
-      const containerWidth = container.clientWidth
-      const itemWidth = 250 + 24
-      const itemsToScroll = Math.floor(containerWidth / itemWidth)
-      const scrollDistance = itemsToScroll * itemWidth
+      const container = scrollContainerRef.current;
+      const containerWidth = container.clientWidth;
+      const itemWidth = 250 + 24;
+      const itemsToScroll = Math.floor(containerWidth / itemWidth);
+      const scrollDistance = itemsToScroll * itemWidth;
 
       container.scrollBy({
         left: scrollDistance,
         behavior: "smooth",
-      })
+      });
     }
-  }
+  };
 
   useEffect(() => {
-    const container = scrollContainerRef.current
+    const container = scrollContainerRef.current;
     if (container) {
-      checkScrollButtons()
-      const handleScroll = () => checkScrollButtons()
+      checkScrollButtons();
+      const handleScroll = () => checkScrollButtons();
       const handleResize = () => {
-        setTimeout(checkScrollButtons, 100)
-      }
+        setTimeout(checkScrollButtons, 100);
+      };
 
-      container.addEventListener("scroll", handleScroll)
-      window.addEventListener("resize", handleResize)
+      container.addEventListener("scroll", handleScroll);
+      window.addEventListener("resize", handleResize);
 
       return () => {
-        container.removeEventListener("scroll", handleScroll)
-        window.removeEventListener("resize", handleResize)
-      }
+        container.removeEventListener("scroll", handleScroll);
+        window.removeEventListener("resize", handleResize);
+      };
     }
-  }, [])
+  }, []);
 
   return (
     <div className="w-full">
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground mb-2">{heading}</h2>
-          <p className="text-muted-foreground">Discover the latest music from your favorite artists</p>
+          <p className="text-muted-foreground">
+            Discover the latest music from your favorite artists
+          </p>
         </div>
 
         {/* Navigation buttons */}
@@ -150,13 +234,13 @@ export default function FeaturedAlbumsSection({ albums, heading }: FeaturedAlbum
               className="group cursor-pointer transition-transform duration-300 flex-shrink-0 w-[200px] md:w-[250px]"
             >
               <div className="relative overflow-hidden rounded-lg bg-muted">
-                <Image
-                  src={album.artworkPath || "/placeholder.svg"}
-                  alt={`${album.title} by ${album.artist}`}
+                <ImageWithFallback
+                  src={album.artworkPath}
+                  alt={`${album.title} album cover`}
                   width={300}
                   height={300}
-                   loader={customUrlImageLoader}
                   className="aspect-square object-cover transition-all duration-300 group-hover:brightness-75"
+                  priority
                 />
 
                 {/* Hover overlay with buttons */}
@@ -187,16 +271,15 @@ export default function FeaturedAlbumsSection({ albums, heading }: FeaturedAlbum
 
               {/* Album info */}
               <div className="mt-3 space-y-1">
-              <Link
-                  href={`/library/albums/${album.id}`}
-                  className="group"
-                >
+                <Link href={`/library/albums/${album.id}`} className="group">
                   <h3 className="font-semibold text-foreground truncate group-hover:text-primary hover:underline transition-colors duration-200">
                     {album.title}
                   </h3>
                 </Link>
                 <Link href={`/library/artists/${album.artist}`}>
-                <p className="text-sm text-muted-foreground truncate">{album.artist}</p>
+                  <p className="text-sm text-muted-foreground truncate">
+                    {album.artist}
+                  </p>
                 </Link>
               </div>
             </div>
@@ -204,5 +287,5 @@ export default function FeaturedAlbumsSection({ albums, heading }: FeaturedAlbum
         </div>
       </div>
     </div>
-  )
+  );
 }

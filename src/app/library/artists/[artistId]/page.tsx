@@ -5,6 +5,8 @@ import { ArtistBioSection } from "@/components/music/artist_components/artist-bi
 import { LatestRelease } from "@/components/music/artist_components/latest-release";
 import MinimalistArtistHero from "@/components/music/artist_components/minimalist-artist-hero";
 import { PopularTracks } from "@/components/music/artist_components/popular-tracks";
+import { useAudio } from "@/contexts/EnhancedAudioContext";
+import { Track } from "@/lib/home_feed_types";
 import { processArtistData } from "@/lib/utils";
 import { notFound } from "next/navigation";
 
@@ -15,6 +17,7 @@ interface PageProps {
 export default async function ArtistPage({ params }: PageProps) {
   const { artistId } = await params;
   const userid = "mwUWTsKbYeIVPV20BN8or955NA1J43";
+
   try {
     const apiResponse = await fetchArtistData(artistId, userid);
     const artistData = processArtistData(apiResponse);
@@ -27,19 +30,13 @@ export default async function ArtistPage({ params }: PageProps) {
       <div className="h-full overflow-auto">
         <div className="space-y-8 p-6">
           {/* Hero Section */}
-          <MinimalistArtistHero artistData={artistData.intro} />
-          <div className="flex flex-row gap-8">           
-
-           
-
-
-             {/* Popular Tracks */}
-             {artistData.popularTracks.length > 0 && (
+          <MinimalistArtistHero artistData={artistData.intro} trackstoPlay={artistData.popularTracks} />
+          <div className="flex flex-row gap-8">
+            {/* Popular Tracks */}
+            {artistData.popularTracks.length > 0 && (
               <PopularTracks tracks={artistData.popularTracks} />
             )}
 
-
-            
             {/* Latest Release */}
             {artistData.latestRelease && (
               <LatestRelease release={artistData.latestRelease} />

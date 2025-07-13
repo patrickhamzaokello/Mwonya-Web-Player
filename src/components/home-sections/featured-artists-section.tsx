@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import type { Artist } from "@/lib/home_feed_types";
 import { customUrlImageLoader } from "@/lib/utils";
 import Link from "next/link";
@@ -12,6 +12,69 @@ interface FeaturedArtistsSectionProps {
   artists: Artist[];
   heading: string;
 }
+
+// Custom hook for image fallback
+const useImageFallback = (
+  src: string,
+  fallbackSrc: string = "/artist_placeholder.svg"
+) => {
+  const [imgSrc, setImgSrc] = useState(() => {
+    // Initialize with fallback if src is invalid
+    if (!src || src.trim() === "" || src === "/artist_placeholder.svg") {
+      return fallbackSrc;
+    }
+    return src;
+  });
+  const [hasError, setHasError] = useState(false);
+
+  const handleError = useCallback(() => {
+    if (!hasError && imgSrc !== fallbackSrc) {
+      setHasError(true);
+      setImgSrc(fallbackSrc);
+    }
+  }, [hasError, imgSrc, fallbackSrc]);
+
+  // Reset when src changes
+  useEffect(() => {
+    if (src && src !== imgSrc && !hasError) {
+      setImgSrc(src);
+      setHasError(false);
+    }
+  }, [src, imgSrc, hasError]);
+
+  return { imgSrc, handleError };
+};
+
+// Reusable Image Component with fallback
+const ImageWithFallback = ({
+  src,
+  alt,
+  width,
+  height,
+  className = "",
+  priority = false,
+}: {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  className?: string;
+  priority?: boolean;
+}) => {
+  const { imgSrc, handleError } = useImageFallback(src);
+
+  return (
+    <Image
+      src={imgSrc}
+      alt={alt}
+      width={width}
+      height={height}
+      className={className}
+      onError={handleError}
+      priority={priority}
+    />
+  );
+};
 
 export function FeaturedArtistsSection({
   artists,
@@ -112,13 +175,13 @@ export function FeaturedArtistsSection({
           <Link key={artist.id} href={`/library/artists/${artist.id}`}>
             <div className="flex-shrink-0 w-[250px] text-center cursor-pointer group hover:scale-[1.02] transition-all duration-300 hover:bg-primary/5 rounded-lg p-4  hover:shadow-lg transform hover:translate-y-[-2px] flex flex-col items-center justify-center text-muted-foreground hover:text-foreground">
               <div className="relative overflow-hidden rounded-full bg-muted mb-3">
-                <Image
-                  src={artist.profilephoto || "/placeholder.svg"}
-                  alt={artist.name}
-                  width={250}
-                  height={250}
-                  loader={customUrlImageLoader}
+                <ImageWithFallback
+                  src={artist.profilephoto}
+                  alt={`${artist.name} artist cover`}
+                  width={300}
+                  height={300}
                   className="aspect-square object-cover transition-all duration-300 group-hover:brightness-90"
+                  priority
                 />
               </div>
               <div className="space-y-1">

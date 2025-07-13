@@ -189,6 +189,7 @@ export default function Component() {
       }
     }
   };
+  
 
   const handlePlayTrack = (track: any, index: number) => {
     console.log(track)

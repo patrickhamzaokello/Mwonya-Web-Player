@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import Image from 'next/image'; 
 import {
   Home,
   Search,
@@ -47,8 +48,9 @@ export function Sidebar() {
 
   return (
     <div className="w-64 bg-muted/30 border-r border-border flex flex-col">
-      <div className="p-6">
-        <h1 className="text-2xl font-bold text-foreground">Music</h1>
+      <div className="p-6 flex flex-row">
+        <Image src="/logo.png" alt="Logo" width={32} height={32} className="mb-4" />
+        <h1 className="text-2xl font-bold text-foreground">Mwonya</h1>
       </div>
 
       <ScrollArea className="flex-1">

@@ -5,6 +5,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Play, MoreHorizontal, ChevronDown, ChevronUp } from "lucide-react"
 import type { Track } from "@/lib/home_feed_types"
+import { useAudio } from "@/contexts/EnhancedAudioContext"
 
 interface PopularTracksProps {
   tracks: Track[]
@@ -67,6 +68,27 @@ export function PopularTracks({ tracks }: PopularTracksProps) {
   const initialDisplayCount = 5
   const displayTracks = isExpanded ? tracks : tracks.slice(0, initialDisplayCount)
   const hasMoreTracks = tracks.length > initialDisplayCount
+  // Audio context integration
+  const { setQueue, play, pause, currentTrack, isPlaying } = useAudio();
+
+  const handlePlayTrack = (track: any, index: number) => {
+    console.log(track)
+    if ((tracks ?? []).length > 0) {
+      // Set the album tracks as queue starting from the selected track
+      if (tracks) {
+        const formattedTracks = tracks.map((track) => ({
+          ...track,
+          url: track.path,
+          artwork: track.artworkPath,
+          id: String(track.id),
+          duration: Number(track.duration),
+          genre: track.genre ?? undefined,
+        }));
+        setQueue(formattedTracks, index);
+      }
+      play(track);
+    }
+  };
 
   return (
     <div className="w-full max-w-2xl">
@@ -77,6 +99,7 @@ export function PopularTracks({ tracks }: PopularTracksProps) {
 
       <div className="space-y-1">
         {displayTracks.map((track, index) => (
+          
           <div
             key={track.id}
             className="flex items-center gap-4 p-3 rounded-md hover:bg-muted/40 transition-all duration-200 group cursor-pointer"
@@ -88,6 +111,7 @@ export function PopularTracks({ tracks }: PopularTracksProps) {
                 size="sm"
                 variant="ghost"
                 className="w-6 h-6 p-0 hidden group-hover:flex hover:bg-primary hover:text-primary-foreground"
+                onClick={() => handlePlayTrack(track, index)}
               >
                 <Play className="w-3 h-3 fill-current" />
               </Button>

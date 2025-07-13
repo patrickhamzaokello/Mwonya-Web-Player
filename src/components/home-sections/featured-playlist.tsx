@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { Play, Share2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import type { Album, Playlist } from "@/lib/home_feed_types";
 import { useAudio } from "@/contexts/EnhancedAudioContext";
 import { fetchPlaylistTracks } from "@/actions/playlist_tracks_data"; // You'll need to create this action
@@ -14,6 +14,69 @@ interface FeaturedPlaylistSectionProps {
   playlists: Playlist[];
   heading: string;
 }
+
+// Custom hook for image fallback
+const useImageFallback = (
+  src: string,
+  fallbackSrc: string = "/placeholder.svg"
+) => {
+  const [imgSrc, setImgSrc] = useState(() => {
+    // Initialize with fallback if src is invalid
+    if (!src || src.trim() === "" || src === "/placeholder.svg") {
+      return fallbackSrc;
+    }
+    return src;
+  });
+  const [hasError, setHasError] = useState(false);
+
+  const handleError = useCallback(() => {
+    if (!hasError && imgSrc !== fallbackSrc) {
+      setHasError(true);
+      setImgSrc(fallbackSrc);
+    }
+  }, [hasError, imgSrc, fallbackSrc]);
+
+  // Reset when src changes
+  useEffect(() => {
+    if (src && src !== imgSrc && !hasError) {
+      setImgSrc(src);
+      setHasError(false);
+    }
+  }, [src, imgSrc, hasError]);
+
+  return { imgSrc, handleError };
+};
+
+// Reusable Image Component with fallback
+const ImageWithFallback = ({
+  src,
+  alt,
+  width,
+  height,
+  className = "",
+  priority = false,
+}: {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  className?: string;
+  priority?: boolean;
+}) => {
+  const { imgSrc, handleError } = useImageFallback(src);
+
+  return (
+    <Image
+      src={imgSrc}
+      alt={alt}
+      width={width}
+      height={height}
+      className={className}
+      onError={handleError}
+      priority={priority}
+    />
+  );
+};
 
 export default function FeaturedPlaylistsSection({
   playlists,
@@ -156,13 +219,15 @@ export default function FeaturedPlaylistsSection({
               className="group cursor-pointer transition-transform duration-300 flex-shrink-0 w-[200px] md:w-[250px]"
             >
               <div className="relative overflow-hidden rounded-lg bg-muted">
-                <Image
-                  src={playlist.coverurl || "/placeholder.svg"}
-                  alt={`${playlist.name} by ${playlist.owner}`}
+                
+
+<ImageWithFallback
+                  src={playlist.coverurl}
+                  alt={`${playlist.coverurl} album cover`}
                   width={300}
                   height={300}
-                   loader={customUrlImageLoader}
                   className="aspect-square object-cover transition-all duration-300 group-hover:brightness-75"
+                  priority
                 />
 
                 {/* Hover overlay with buttons */}

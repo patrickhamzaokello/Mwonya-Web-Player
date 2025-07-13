@@ -8,9 +8,8 @@ import { useAuth } from "@/contexts/AuthContext";
 
 import { useHomeFeed } from "@/hooks/use-home-feed";
 import { DEFAULT_USER_ID, CONTENT_TYPES } from "@/lib/constants";
-import { MusicHeroSlider } from "@/components/home-sections/hero-section";
+import { MusicHeroSlider } from "@/components/home-sections/new-release-slider";
 import { ImageAd } from "@/components/home-sections/image-ad";
-import { NewReleasesSection } from "@/components/home-sections/new-releases-section";
 import { FeaturedArtistsSection } from "@/components/home-sections/featured-artists-section";
 import { WeeklyTopSection } from "@/components/home-sections/weekly-top-section";
 import { GenreSection } from "@/components/home-sections/genre-section";
@@ -104,15 +103,6 @@ export default function HomePage() {
                   type={section.ad_type || ""}
                 />
               );
-
-            // case CONTENT_TYPES.NEW_RELEASE:
-            //   return (
-            //     <NewReleasesSection
-            //       key={index}
-            //       releases={section.HomeRelease || []}
-            //       heading={section.heading || "New Releases"}
-            //     />
-            //   );
 
             case CONTENT_TYPES.ARTIST:
               return (

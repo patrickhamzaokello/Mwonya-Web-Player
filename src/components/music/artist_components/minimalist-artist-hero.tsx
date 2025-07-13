@@ -1,16 +1,49 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { CheckCircle, Play, UserPlus, UserCheck, MoreHorizontal } from "lucide-react"
-import { ArtistIntro } from "@/lib/artist_page_types"
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  CheckCircle,
+  Play,
+  UserPlus,
+  UserCheck,
+  MoreHorizontal,
+} from "lucide-react";
+import { ArtistIntro } from "@/lib/artist_page_types";
+import { useAudio } from "@/contexts/EnhancedAudioContext";
+import { Track } from "@/lib/home_feed_types";
+import { useState } from "react";
 
 interface MinimalistArtistHeroProps {
-  artistData: ArtistIntro
+  artistData: ArtistIntro;
+  trackstoPlay?: Track[];
 }
 
-export default function MinimalistArtistHero({ artistData }: MinimalistArtistHeroProps) {
+export default function MinimalistArtistHero({
+  artistData,
+  trackstoPlay,
+}: MinimalistArtistHeroProps) {
+  // Audio context integration
+  const { setQueue, play, pause, currentTrack, isPlaying } = useAudio();
+  const [trackstoPlays, settrackstoPlay] = useState(trackstoPlay || []);
+
+  const handlePlayTrack = () => {
+    if (trackstoPlays.length ?? 0 > 0) {
+      // Set the entire album as the queue and play from the first track
+      const formattedTracks = trackstoPlays.map((track) => ({
+        ...track,
+        url: track.path,
+        artwork: track.artworkPath,
+        id: String(track.id),
+        duration: Number(track.duration),
+        genre: track.genre ?? undefined,
+      }));
+      setQueue(formattedTracks, 0);
+      play(formattedTracks[0]);
+    }
+  };
+
   return (
     <div className="">
       <div className="container">
@@ -32,11 +65,14 @@ export default function MinimalistArtistHero({ artistData }: MinimalistArtistHer
           {/* Artist Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <Badge variant="secondary" className="bg-zinc-800 text-zinc-300 text-xs px-2 py-1">
+              <Badge
+                variant="secondary"
+                className="bg-zinc-800 text-zinc-300 text-xs px-2 py-1"
+              >
                 Artist
               </Badge>
               {artistData.verified && (
-                  <svg
+                <svg
                   width="20"
                   height="20"
                   viewBox="0 0 27 27"
@@ -50,18 +86,19 @@ export default function MinimalistArtistHero({ artistData }: MinimalistArtistHer
                 </svg>
               )}
             </div>
-            
+
             <h1 className="text-2xl font-semibold text-white mb-1 truncate">
               {artistData.name}
             </h1>
-            
+
             <p className="text-sm text-zinc-400 mb-3">{artistData.monthly}</p>
-            
+
             {/* Action Buttons */}
             <div className="flex items-center gap-3">
               <Button
                 size="sm"
                 className="bg-white text-black hover:bg-zinc-100 px-4 py-2 h-8 rounded-md"
+                onClick={() => handlePlayTrack()}
               >
                 <Play className="w-3 h-3 mr-2 fill-current" />
                 Play
@@ -101,20 +138,24 @@ export default function MinimalistArtistHero({ artistData }: MinimalistArtistHer
 
           {/* Stats - Desktop Only */}
           <div className="hidden lg:flex items-center gap-8 text-sm">
-           {/* Exclusive Access */}
-          {!artistData.user_access_exclusive && (
-            <div className="bg-zinc-800 rounded-lg p-4">
-              <h3 className="text-xs font-medium text-zinc-400 mb-2">Exclusive Access</h3>
-              <p className="text-xs text-zinc-400 mb-3">Join artist circle for exclusive content</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-amber-600 text-amber-400 hover:bg-amber-950 text-xs px-3 py-1 h-7 rounded-md w-full"
-              >
-                Join for ${(artistData.circle_cost / 100).toFixed(0)}
-              </Button>
-            </div>
-          )}
+            {/* Exclusive Access */}
+            {!artistData.user_access_exclusive && (
+              <div className="bg-zinc-800 rounded-lg p-4">
+                <h3 className="text-xs font-medium text-zinc-400 mb-2">
+                  Exclusive Access
+                </h3>
+                <p className="text-xs text-zinc-400 mb-3">
+                  Join artist circle for exclusive content
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-amber-600 text-amber-400 hover:bg-amber-950 text-xs px-3 py-1 h-7 rounded-md w-full"
+                >
+                  Join for ${(artistData.circle_cost / 100).toFixed(0)}
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -126,7 +167,9 @@ export default function MinimalistArtistHero({ artistData }: MinimalistArtistHer
           {/* About */}
           <div className="md:col-span-2">
             <h2 className="text-sm font-medium text-zinc-400 mb-2">About</h2>
-            <p className="text-sm text-zinc-300 leading-relaxed">{artistData.intro}</p>
+            <p className="text-sm text-zinc-300 leading-relaxed">
+              {artistData.intro}
+            </p>
           </div>
 
           {/* Details */}
@@ -135,19 +178,19 @@ export default function MinimalistArtistHero({ artistData }: MinimalistArtistHer
               <h3 className="text-xs font-medium text-zinc-500 mb-1">Genre</h3>
               <p className="text-sm text-zinc-300">Afro Pop</p>
             </div>
-            
+
             <div>
               <h3 className="text-xs font-medium text-zinc-500 mb-1">Label</h3>
               <p className="text-sm text-zinc-300">Independent</p>
             </div>
 
             <div>
-              <h3 className="text-xs font-medium text-zinc-500 mb-1">Location</h3>
+              <h3 className="text-xs font-medium text-zinc-500 mb-1">
+                Location
+              </h3>
               <p className="text-sm text-zinc-300">Northern Uganda</p>
             </div>
           </div>
-
-          
         </div>
 
         {/* Mobile Stats */}
@@ -167,5 +210,5 @@ export default function MinimalistArtistHero({ artistData }: MinimalistArtistHer
         </div>
       </div>
     </div>
-  )
+  );
 }
