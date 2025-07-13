@@ -26,6 +26,42 @@ function formatPlays(plays: number): string {
   return plays.toString()
 }
 
+// Custom hook for image fallback
+function useImageFallback(src: string, fallbackSrc: string = "/placeholder.svg") {
+  const [imgSrc, setImgSrc] = useState(src || fallbackSrc)
+  const [hasError, setHasError] = useState(false)
+
+  const handleError = () => {
+    if (!hasError) {
+      setHasError(true)
+      setImgSrc(fallbackSrc)
+    }
+  }
+
+  return { imgSrc, handleError }
+}
+
+// TrackImage component to handle individual track artwork
+function TrackImage({ track }: { track: Track }) {
+  const { imgSrc, handleError } = useImageFallback(
+    track.artworkPath,
+    "/placeholder.svg"
+  )
+
+  return (
+    <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0 bg-muted">
+      <Image
+        src={imgSrc}
+        alt={track.title}
+        width={40}
+        height={40}
+        className="w-full h-full object-cover"
+        onError={handleError}
+      />
+    </div>
+  )
+}
+
 export function PopularTracks({ tracks }: PopularTracksProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const initialDisplayCount = 5
@@ -57,16 +93,8 @@ export function PopularTracks({ tracks }: PopularTracksProps) {
               </Button>
             </div>
 
-            {/* Album Art */}
-            <div className="w-10 h-10 rounded-md overflow-hidden flex-shrink-0">
-              <Image
-                src={track.artworkPath || "/placeholder.svg"}
-                alt={track.title}
-                width={40}
-                height={40}
-                className="w-full h-full object-cover"
-              />
-            </div>
+            {/* Album Art with Error Handling */}
+            <TrackImage track={track} />
 
             {/* Track Info */}
             <div className="flex-1 min-w-0">

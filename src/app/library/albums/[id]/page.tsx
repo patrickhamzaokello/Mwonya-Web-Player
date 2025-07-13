@@ -22,7 +22,67 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useAudio } from "@/contexts/EnhancedAudioContext";
 
-// Utility function to validate URLs
+// Custom hook for image fallback
+const useImageFallback = (src: string, fallbackSrc: string = "/placeholder.svg") => {
+  const [imgSrc, setImgSrc] = useState(() => {
+    // Initialize with fallback if src is invalid
+    if (!src || src.trim() === "" || src === "/placeholder.svg") {
+      return fallbackSrc;
+    }
+    return src;
+  });
+  const [hasError, setHasError] = useState(false);
+
+  const handleError = useCallback(() => {
+    if (!hasError && imgSrc !== fallbackSrc) {
+      setHasError(true);
+      setImgSrc(fallbackSrc);
+    }
+  }, [hasError, imgSrc, fallbackSrc]);
+
+  // Reset when src changes
+  useEffect(() => {
+    if (src && src !== imgSrc && !hasError) {
+      setImgSrc(src);
+      setHasError(false);
+    }
+  }, [src, imgSrc, hasError]);
+
+  return { imgSrc, handleError };
+};
+
+// Reusable Image Component with fallback
+const ImageWithFallback = ({ 
+  src, 
+  alt, 
+  width, 
+  height, 
+  className = "", 
+  priority = false 
+}: {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  className?: string;
+  priority?: boolean;
+}) => {
+  const { imgSrc, handleError } = useImageFallback(src);
+
+  return (
+    <Image
+      src={imgSrc}
+      alt={alt}
+      width={width}
+      height={height}
+      className={className}
+      onError={handleError}
+      priority={priority}
+    />
+  );
+};
+
+// Utility function to validate URLs (keeping your existing logic)
 const isValidUrl = (string: string): boolean => {
   if (!string || string.trim() === "" || string === "/placeholder.svg") {
     return false;
@@ -127,9 +187,9 @@ export default function Component() {
           duration: Number(data.tracks[0].duration),
         });
       }
-      // Removed redundant block using undefined 'index'
     }
   };
+
   const handlePlayTrack = (track: any, index: number) => {
     console.log(track)
     if ((data?.tracks ?? []).length > 0) {
@@ -338,27 +398,39 @@ export default function Component() {
           {/* Album Cover and Controls */}
           <div className="lg:col-span-1">
             <div className="aspect-square bg-gray-700 rounded-lg mb-4 overflow-hidden relative">
-              <Image
-                src={
-                  isValidUrl(data.artworkPath)
-                    ? data.artworkPath
-                    : "/placeholder.svg"
-                }
+              <ImageWithFallback
+                src={data.artworkPath}
                 alt={`${data.title} album cover`}
                 width={300}
                 height={300}
                 className="w-full h-full object-cover"
-                crossOrigin="anonymous"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = "/placeholder.svg";
-                }}
                 priority
               />
             </div>
-            <div className="flex gap-3 w-full">
+            
+          </div>
+
+          {/* Album Info and Tracklist */}
+          <div className="lg:col-span-2">
+            <div className="mb-6">
+              <h2 className="text-4xl font-bold text-primary mb-2">
+                {data.title}
+              </h2>
+              <p className="text-gray-300">
+                <span className="font-medium">{data.artistName}</span> •{" "}
+                {data.genreName} • {data.datecreated}
+              </p>
+              {data.description &&
+                data.description !== "No description available" && (
+                  <p className="text-gray-400 text-sm mt-2">
+                    {data.description}
+                  </p>
+                )}
+            </div>
+
+            <div className="flex gap-3 mb-6">
               <Button
-                className="bg-[#5E00E2] hover:bg-purple-700 text-white flex-1"
+                className="bg-primary hover:bg-primary text-white w-40"
                 onClick={
                   isCurrentAlbumPlaying ? handlePauseTrack : handlePlayAlbum
                 }
@@ -378,30 +450,11 @@ export default function Component() {
               </Button>
               <Button
                 variant="outline"
-                className="border-gray-600 text-white hover:bg-gray-800 bg-transparent flex-1"
+                className="border-gray-600 text-white hover:bg-gray-800 bg-transparent w-40"
               >
                 <Share className="w-4 h-4 mr-2" />
                 Share
               </Button>
-            </div>
-          </div>
-
-          {/* Album Info and Tracklist */}
-          <div className="lg:col-span-2">
-            <div className="mb-6">
-              <h2 className="text-4xl font-bold text-[#5E00E2] mb-2">
-                {data.title}
-              </h2>
-              <p className="text-gray-300">
-                <span className="font-medium">{data.artistName}</span> •{" "}
-                {data.genreName} • {data.datecreated}
-              </p>
-              {data.description &&
-                data.description !== "No description available" && (
-                  <p className="text-gray-400 text-sm mt-2">
-                    {data.description}
-                  </p>
-                )}
             </div>
 
             {/* Tracklist */}
@@ -416,7 +469,7 @@ export default function Component() {
                   return (
                     <div
                       key={track.id}
-                      className={`group flex items-center gap-3 p-2 rounded-md hover:bg-gray-800/50 transition-all duration-200 cursor-pointer ${
+                      className={`group flex items-center gap-3 p-2  hover:bg-muted transition-all duration-200 cursor-pointer mb-0 ${
                         index !== data.tracks.length - 1
                           ? "border-b border-gray-800"
                           : ""
@@ -429,7 +482,7 @@ export default function Component() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="p-0 h-auto text-green-400 hover:text-green-300"
+                            className="p-0 h-auto text-primary hover:text-primary"
                             onClick={(e) => {
                               e.stopPropagation();
                               isPlaying ? handlePauseTrack() : play({ ...track, duration: Number(track.duration) });
@@ -466,8 +519,8 @@ export default function Component() {
                         <p
                           className={`font-medium truncate transition-colors ${
                             isCurrentTrack
-                              ? "text-green-400"
-                              : "text-white group-hover:text-green-400"
+                              ? "text-primary"
+                              : "text-white group-hover:text-primary"
                           }`}
                         >
                           {track.title}
@@ -532,22 +585,13 @@ export default function Component() {
                   className="cursor-pointer"
                   onClick={() => handleRelatedAlbumClick(album.id)}
                 >
-                  <div className="aspect-square bg-gray-700 rounded-lg mb-3 overflow-hidden">
-                    <Image
-                      src={
-                        isValidUrl(album.artworkPath)
-                          ? album.artworkPath
-                          : "/placeholder.svg"
-                      }
+                  <div className="aspect-square bg-muted rounded-lg mb-3 overflow-hidden">
+                    <ImageWithFallback
+                      src={album.artworkPath}
                       alt={album.title}
                       width={150}
                       height={150}
                       className="w-full h-full object-cover"
-                      crossOrigin="anonymous"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = "/placeholder.svg";
-                      }}
                     />
                   </div>
                   <h4
