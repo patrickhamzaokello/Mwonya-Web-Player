@@ -77,7 +77,7 @@ export interface PlaybackAnalytics {
 export interface UserInteraction {
   trackId: string;
   userId?: string;
-  action: 'like' | 'unlike' | 'report' | 'add_to_playlist' | 'remove_from_playlist';
+  action: 'like' | 'unlike' | 'report' | 'add_to_playlist' | 'remove_from_playlist' | 'play';
   timestamp: Date;
   context?: string;
 }
