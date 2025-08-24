@@ -215,7 +215,7 @@ export interface Mixtape {
 export async function fetchHomeData(userID: string, page = 1): Promise<HomeFeedResponse> {
   console.log("Fetching Home data for user:", userID, "on page:", page);
   try {
-    const response = await fetch(`https://api.mwonya.com/v1/Requests/endpoints/allcombined.php?page=${page}&userID=${userID}`);
+    const response = await fetch(`https://test.mwonya.com/ios/Requests/endpoints/allcombined.php?page=${page}&userID=${userID}`);
     
     if (!response.ok) {
       throw new Error(`Failed to fetch Home data: ${response.status} ${response.statusText}`);
@@ -233,7 +233,7 @@ export async function fetchHomeData(userID: string, page = 1): Promise<HomeFeedR
 export async function fetchPlaylistData(playlistId: string, page: number = 1) {
   try {
     const response = await axios.get(
-      'https://api.mwonya.com/v1/Requests/endpoints/selectedPlaylist.php',
+      'https://test.mwonya.com/ios/Requests/endpoints/selectedPlaylist.php',
       {
         params: {
           page,
