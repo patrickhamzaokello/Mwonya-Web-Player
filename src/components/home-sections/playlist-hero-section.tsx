@@ -114,7 +114,7 @@ const playlistSlides: PlaylistSlide[] = [
 export function PlaylistHeroSlider() {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isPlaying, setIsPlaying] = useState(true)
-  const [followingStates, setFollowingStates] = useState(
+  const [followingStates, setFollowingStates] = useState<Record<number, boolean>>(
     playlistSlides.reduce((acc, slide) => ({ ...acc, [slide.id]: slide.isFollowing }), {}),
   )
 
