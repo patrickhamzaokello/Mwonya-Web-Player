@@ -2,7 +2,6 @@
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { ArtistAlbum } from "@/lib/artist_page_types";
 import { Button } from "@/components/ui/button";
 import { Play, Share2 } from "lucide-react";
 import { customUrlImageLoader } from "@/lib/utils";
@@ -10,9 +9,10 @@ import { fetchAlbumTracks } from "@/actions/album_tracks_data";
 import { useRef, useState, useEffect } from "react";
 import { useAudio } from "@/contexts/EnhancedAudioContext";
 import Link from "next/link";
+import { Album } from "@/types/audio";
 
 interface DiscographyProps {
-  albums: ArtistAlbum[];
+  albums: Album[];
 }
 
 export function Discography({ albums }: DiscographyProps) {
@@ -62,7 +62,7 @@ export function Discography({ albums }: DiscographyProps) {
             >
               <div className="relative overflow-hidden rounded-lg bg-muted">
                 <Image
-                  src={album.artworkPath || "/placeholder.svg"}
+                  src={album.artwork || "/placeholder.svg"}
                   alt={`${album.title} by ${album.artist}`}
                   width={300}
                   height={300}
